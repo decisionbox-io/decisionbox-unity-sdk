@@ -1,0 +1,60 @@
+{
+  "name": "io.decisionbox.sdk",
+  "version": "1.0.0",
+  "displayName": "DecisionBox Unity SDK",
+  "description": "Advanced analytics and real-time insights for Unity games. Track player behavior, game events, and performance metrics with ease.",
+  "unity": "2020.3",
+  "unityRelease": "0f1",
+  "documentationUrl": "https://github.com/decisionbox-io/decisionbox-unity-sdk/blob/main/README.md",
+  "changelogUrl": "https://github.com/decisionbox-io/decisionbox-unity-sdk/blob/main/CHANGELOG.md",
+  "licensesUrl": "https://github.com/decisionbox-io/decisionbox-unity-sdk/blob/main/LICENSE.md",
+  "keywords": [
+    "analytics",
+    "gaming",
+    "telemetry",
+    "unity",
+    "player-tracking",
+    "game-analytics",
+    "real-time",
+    "insights",
+    "monetization",
+    "retention"
+  ],
+  "author": {
+    "name": "DecisionBox",
+    "email": "sdk@decisionbox.io",
+    "url": "https://decisionbox.io"
+  },
+  "license": "SEE LICENSE IN LICENSE.md",
+  "type": "library",
+  "samples": [
+    {
+      "displayName": "Basic Usage",
+      "description": "Simple SDK setup and basic event tracking",
+      "path": "Samples~/BasicUsage"
+    },
+    {
+      "displayName": "Basic Analytics",
+      "description": "Simple player tracking and event logging",
+      "path": "Samples~/BasicAnalytics"
+    },
+    {
+      "displayName": "Gaming Events",
+      "description": "Comprehensive game event tracking examples",
+      "path": "Samples~/GamingEvents"
+    },
+    {
+      "displayName": "Real-time Features",
+      "description": "WebSocket integration and real-time communication",
+      "path": "Samples~/RealtimeFeatures"
+    },
+    {
+      "displayName": "Advanced Integration",
+      "description": "Custom event tracking and advanced use cases",
+      "path": "Samples~/AdvancedIntegration"
+    }
+  ],
+  "dependencies": {
+    "com.unity.nuget.newtonsoft-json": "3.2.1"
+  }
+}
