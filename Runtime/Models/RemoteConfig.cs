@@ -25,9 +25,6 @@ namespace DecisionBox.Models
         public bool websocketEnabled { get; set; } = true;
 
         [JsonIgnoreAttribute]
-        public string? websocketUrl { get; set; } = "wss://eventapi.dev.decisionbox.io/ws";
-
-        [JsonIgnoreAttribute]
         public long maxBackgroundDuration { get; set; } = 300000; // 5 minutes in milliseconds
 
         [JsonIgnoreAttribute]

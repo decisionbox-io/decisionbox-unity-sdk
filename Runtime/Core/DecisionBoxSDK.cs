@@ -30,10 +30,14 @@ namespace DecisionBox.Core
             ? "https://eventapi.dev.decisionbox.io/events" 
             : "https://eventapi.decisionbox.io/events";
 
+        private string websocketUrl => environment == "development"
+            ? "wss://ws.dev.decisionbox.io/ws"
+            : "wss://ws.decisionbox.io/ws";
+
         // Private fields
         private bool sdkActive = false;
         private string? currentUserId;
-        private string? currentSessionId;
+        public string CurrentSessionId;
         private string jwtToken = "";
         private long tokenExpiry = 0;
         private RemoteConfig? remoteConfig;
@@ -45,6 +49,11 @@ namespace DecisionBox.Core
         private bool hasSentSessionEndEvent = false;
 
         #region Unity Lifecycle
+
+        public string GetAppID()
+        {
+            return appId;
+        }
 
         private void Awake()
         {
@@ -497,25 +506,7 @@ namespace DecisionBox.Core
             return await SendEventAsync(eventData);
         }
 
-        /// <summary>
-        /// Send UserTouch event
-        /// </summary>
-        public async Task<bool> SendUserTouchAsync(string? userId = null, int fingerId = 0, string phase = "", float normalizedX = 0f, float normalizedY = 0f, float rawX = 0f, float rawY = 0f, float timestamp = 0f)
-        {
-            if (!ValidateSDKState()) return false;
-
-            var eventData = new UserTouchEvent(
-                userId ?? currentUserId!,
-                fingerId,
-                phase,
-                normalizedX,
-                normalizedY,
-                rawX,
-                rawY,
-                timestamp
-            );
-            return await SendEventAsync(eventData);
-        }
+        
 
         #endregion
 
@@ -545,11 +536,11 @@ namespace DecisionBox.Core
 
         private void StartNewSession()
         {
-            currentSessionId = Guid.NewGuid().ToString();
+            CurrentSessionId = Guid.NewGuid().ToString();
             sessionStartTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             hasSentSessionEndEvent = false;
 
-            PlayerPrefs.SetString("DECISIONBOX_SESSION_ID", currentSessionId);
+            PlayerPrefs.SetString("DECISIONBOX_SESSION_ID", CurrentSessionId);
             PlayerPrefs.Save();
 
             // Send SessionStarted event
@@ -561,7 +552,7 @@ namespace DecisionBox.Core
                 _ = ConnectWebSocketAsync();
             }
 
-            SDKLog($"New session started: {currentSessionId}");
+            SDKLog($"New session started: {CurrentSessionId}");
         }
 
         private void EndCurrentSession(string reason)
@@ -680,17 +671,7 @@ namespace DecisionBox.Core
                     }
                 }
 
-                var apiEvent = new
-                {
-                    user_id = eventData.UserId,
-                    session_id = currentSessionId,
-                    app_id = appId,
-                    event_type = eventData.EventType,
-                    timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-                    metadata = eventData.GetMetadata()
-                };
-
-                string json = JsonConvert.SerializeObject(apiEvent);
+                string json = JsonConvert.SerializeObject(eventData);
                 byte[] bodyData = Encoding.UTF8.GetBytes(json);
 
                 using (var request = new UnityWebRequest(EventApiUrl, "POST"))
@@ -765,9 +746,9 @@ namespace DecisionBox.Core
         {
             try
             {
-                if (remoteConfig?.websocketUrl == null) return;
+                if (websocketUrl == null) return;
 
-                string wsUrl = $"{remoteConfig.websocketUrl}?session_id={currentSessionId}";
+                string wsUrl = $"{websocketUrl}?session_id={CurrentSessionId}";
                 websocket = new WebSocket(wsUrl);
 
                 websocket.OnOpen += () =>
@@ -778,7 +759,7 @@ namespace DecisionBox.Core
                     {
                         type = "auth",
                         token = jwtToken,
-                        session_id = currentSessionId
+                        session_id = CurrentSessionId
                     };
                     websocket.SendText(JsonConvert.SerializeObject(authMessage));
                 };

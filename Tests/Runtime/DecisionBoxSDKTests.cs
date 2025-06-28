@@ -15,23 +15,30 @@ namespace DecisionBox.Tests
     [TestFixture]
     public class DecisionBoxSDKTests
     {
-        private GameObject testObject;
         private DecisionBoxSDK sdk;
         private const string TEST_USER_ID = "test_user_123";
         
         [SetUp]
         public void Setup()
         {
-            testObject = new GameObject("TestSDK");
-            sdk = testObject.AddComponent<DecisionBoxSDK>();
+            // Reset singleton instance before each test
+            var instanceField = typeof(DecisionBoxSDK).GetField("_instance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            instanceField?.SetValue(null, null);
+            
+            // Create new instance through singleton
+            sdk = DecisionBoxSDK.Instance;
         }
 
         [TearDown]
         public void TearDown()
         {
-            if (testObject != null)
+            // Clean up singleton instance
+            var instanceField = typeof(DecisionBoxSDK).GetField("_instance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            var currentInstance = instanceField?.GetValue(null) as DecisionBoxSDK;
+            if (currentInstance != null)
             {
-                UnityEngine.Object.DestroyImmediate(testObject);
+                UnityEngine.Object.DestroyImmediate(currentInstance.gameObject);
+                instanceField.SetValue(null, null);
             }
             PlayerPrefs.DeleteAll();
         }
@@ -39,23 +46,23 @@ namespace DecisionBox.Tests
         #region Initialization Tests
 
         [Test]
-        public void Constructor_SetsInstanceCorrectly()
+        public void Instance_ReturnsSingletonInstance()
         {
+            var instance1 = DecisionBoxSDK.Instance;
+            var instance2 = DecisionBoxSDK.Instance;
+            Assert.AreSame(instance1, instance2);
             Assert.AreEqual(sdk, DecisionBoxSDK.Instance);
         }
 
         [Test]
-        public void Constructor_GeneratesUserIdIfNotProvided()
+        public void Instance_GeneratesUserIdIfNotProvided()
         {
             // Clear any existing user ID
             PlayerPrefs.DeleteKey("DECISIONBOX_USER_ID");
             PlayerPrefs.Save();
 
-            // Access through Instance property
-            var instance = DecisionBoxSDK.Instance;
-            
             // Configure the SDK for testing
-            instance.Configure("test-app-id", "test-app-secret", "development", true);
+            sdk.Configure("test-app-id", "test-app-secret", "development", true);
             
             // Initialize should generate a user ID
             Assert.IsNotNull(PlayerPrefs.GetString("DECISIONBOX_USER_ID", null));
@@ -72,11 +79,18 @@ namespace DecisionBox.Tests
         }
 
         [Test]
-        public void Constructor_ReuseExistingUserId()
+        public void Instance_ReuseExistingUserId()
         {
             string existingUserId = "existing_user_123";
             PlayerPrefs.SetString("DECISIONBOX_USER_ID", existingUserId);
             PlayerPrefs.Save();
+            
+            // Reset singleton to test user ID persistence
+            var instanceField = typeof(DecisionBoxSDK).GetField("_instance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            instanceField?.SetValue(null, null);
+            
+            // Get new instance
+            var newSdk = DecisionBoxSDK.Instance;
             
             Assert.AreEqual(existingUserId, PlayerPrefs.GetString("DECISIONBOX_USER_ID", ""));
         }

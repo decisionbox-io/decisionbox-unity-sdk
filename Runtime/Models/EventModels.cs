@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using DecisionBox.Core;
+using Newtonsoft.Json;
+using UnityEngine;
 
 #nullable enable
 
@@ -10,13 +13,33 @@ namespace DecisionBox.Models
     /// </summary>
     public abstract class EventData
     {
+        [JsonProperty("user_id")]
         public string UserId { get; }
+
+        [JsonProperty("session_id")]
+        public string SessionId { get; set; }
+
+        [JsonProperty("app_id")]
+        public string AppId { get; set; }
+
+        [JsonProperty("event_type")]
         public abstract string EventType { get; }
 
-        protected EventData(string userId)
+        [JsonProperty("timestamp")]
+        public long Timestamp { get; set; }
+
+        [JsonProperty("metadata")]
+        public Dictionary<string, object> Metadata { get; set; } = new Dictionary<string, object>();
+
+        protected EventData(string userId, string sessionId, string appId)
         {
             UserId = userId ?? throw new ArgumentNullException(nameof(userId));
+            SessionId = sessionId;
+            AppId = appId ?? "default_app_id"; // Default app ID can be set or passed in
+            Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            Metadata = GetMetadata();
         }
+
 
         /// <summary>
         /// Get the metadata dictionary for this event
@@ -30,12 +53,15 @@ namespace DecisionBox.Models
     public class GameStartedEvent : EventData
     {
         public override string EventType => "GameStarted";
+        [JsonIgnore]
         public int? InitialSoftCurrency { get; }
+        [JsonIgnore]
         public int? InitialHardCurrency { get; }
+        [JsonIgnore]
         public int? InitialPremiumCurrency { get; }
 
         public GameStartedEvent(string userId, int? initialSoftCurrency = null, int? initialHardCurrency = null, int? initialPremiumCurrency = null)
-            : base(userId)
+            : base(userId, DecisionBoxSDK.Instance.CurrentSessionId, DecisionBoxSDK.Instance.GetAppID())
         {
             InitialSoftCurrency = initialSoftCurrency;
             InitialHardCurrency = initialHardCurrency;
@@ -58,12 +84,15 @@ namespace DecisionBox.Models
     public class LevelStartedEvent : EventData
     {
         public override string EventType => "LevelStarted";
+        [JsonIgnore]
         public int LevelNumber { get; }
+        [JsonIgnore]
         public string? LevelName { get; }
+        [JsonIgnore]
         public string? Difficulty { get; }
 
         public LevelStartedEvent(string userId, int levelNumber, string? levelName = null, string? difficulty = null)
-            : base(userId)
+            : base(userId, DecisionBoxSDK.Instance.CurrentSessionId, DecisionBoxSDK.Instance.GetAppID())
         {
             LevelNumber = levelNumber;
             LevelName = levelName;
@@ -88,14 +117,19 @@ namespace DecisionBox.Models
     public class ScoreUpdatedEvent : EventData
     {
         public override string EventType => "ScoreUpdated";
+        [JsonIgnore]
         public int LevelNumber { get; }
+        [JsonIgnore]
         public int CurrentScore { get; }
+        [JsonIgnore]
         public int? OldScore { get; }
+        [JsonIgnore]
         public int? ScoreDelta { get; }
+        [JsonIgnore]
         public int ComboMultiplier { get; }
 
         public ScoreUpdatedEvent(string userId, int levelNumber, int currentScore, int? oldScore = null, int? scoreDelta = null, int comboMultiplier = 1)
-            : base(userId)
+            : base(userId, DecisionBoxSDK.Instance.CurrentSessionId, DecisionBoxSDK.Instance.GetAppID())
         {
             LevelNumber = levelNumber;
             CurrentScore = currentScore;
@@ -124,13 +158,17 @@ namespace DecisionBox.Models
     public class PowerUpCollectedEvent : EventData
     {
         public override string EventType => "PowerUpCollected";
+        [JsonIgnore]
         public int LevelNumber { get; }
+        [JsonIgnore]
         public string PowerUpType { get; }
+        [JsonIgnore]
         public int Quantity { get; }
+        [JsonIgnore]
         public double? Duration { get; }
 
         public PowerUpCollectedEvent(string userId, int levelNumber, string powerUpType, int quantity, double? duration = null)
-            : base(userId)
+            : base(userId, DecisionBoxSDK.Instance.CurrentSessionId, DecisionBoxSDK.Instance.GetAppID())
         {
             LevelNumber = levelNumber;
             PowerUpType = powerUpType ?? throw new ArgumentNullException(nameof(powerUpType));
@@ -157,14 +195,19 @@ namespace DecisionBox.Models
     public class CurrencyBalanceUpdatedEvent : EventData
     {
         public override string EventType => "CurrencyBalanceUpdated";
+        [JsonIgnore]
         public CurrencyType CurrencyType { get; }
+        [JsonIgnore]
         public int? OldBalance { get; }
+        [JsonIgnore]
         public int CurrentBalance { get; }
+        [JsonIgnore]
         public int? Delta { get; }
+        [JsonIgnore]
         public CurrencyUpdateReason UpdateReason { get; }
 
         public CurrencyBalanceUpdatedEvent(string userId, CurrencyType currencyType, int? oldBalance, int currentBalance, int? delta, CurrencyUpdateReason updateReason)
-            : base(userId)
+            : base(userId, DecisionBoxSDK.Instance.CurrentSessionId, DecisionBoxSDK.Instance.GetAppID())
         {
             CurrencyType = currencyType;
             OldBalance = oldBalance;
@@ -193,13 +236,17 @@ namespace DecisionBox.Models
     public class BoosterOfferedEvent : EventData
     {
         public override string EventType => "BoosterOffered";
+        [JsonIgnore]
         public int LevelNumber { get; }
+        [JsonIgnore]
         public BoosterType BoosterType { get; }
+        [JsonIgnore]
         public OfferMethod OfferMethod { get; }
+        [JsonIgnore]
         public int RequiredCurrency { get; }
 
         public BoosterOfferedEvent(string userId, int levelNumber, BoosterType boosterType, OfferMethod offerMethod, int requiredCurrency)
-            : base(userId)
+            : base(userId, DecisionBoxSDK.Instance.CurrentSessionId, DecisionBoxSDK.Instance.GetAppID())
         {
             LevelNumber = levelNumber;
             BoosterType = boosterType;
@@ -225,13 +272,17 @@ namespace DecisionBox.Models
     public class BoosterAcceptedEvent : EventData
     {
         public override string EventType => "BoosterAccepted";
+        [JsonIgnore]
         public int LevelNumber { get; }
+        [JsonIgnore]
         public BoosterType BoosterType { get; }
+        [JsonIgnore]
         public AcceptMethod AcceptMethod { get; }
+        [JsonIgnore]
         public int SpentAmount { get; }
 
         public BoosterAcceptedEvent(string userId, int levelNumber, BoosterType boosterType, AcceptMethod acceptMethod, int spentAmount)
-            : base(userId)
+            : base(userId, DecisionBoxSDK.Instance.CurrentSessionId, DecisionBoxSDK.Instance.GetAppID())
         {
             LevelNumber = levelNumber;
             BoosterType = boosterType;
@@ -257,12 +308,15 @@ namespace DecisionBox.Models
     public class BoosterDeclinedEvent : EventData
     {
         public override string EventType => "BoosterDeclined";
+        [JsonIgnore]
         public int LevelNumber { get; }
+        [JsonIgnore]
         public BoosterType BoosterType { get; }
+        [JsonIgnore]
         public DeclineReason DeclineReason { get; }
 
         public BoosterDeclinedEvent(string userId, int levelNumber, BoosterType boosterType, DeclineReason declineReason)
-            : base(userId)
+            : base(userId, DecisionBoxSDK.Instance.CurrentSessionId, DecisionBoxSDK.Instance.GetAppID())
         {
             LevelNumber = levelNumber;
             BoosterType = boosterType;
@@ -286,14 +340,19 @@ namespace DecisionBox.Models
     public class ActionOutcomeRecordedEvent : EventData
     {
         public override string EventType => "ActionOutcomeRecorded";
+        [JsonIgnore]
         public string RulesetId { get; }
+        [JsonIgnore]
         public OfferMethod OfferMethod { get; }
+        [JsonIgnore]
         public string Outcome { get; }
+        [JsonIgnore]
         public bool IsPositive { get; }
+        [JsonIgnore]
         public double? Value { get; }
 
         public ActionOutcomeRecordedEvent(string userId, string rulesetId, OfferMethod offerMethod, AcceptMethod acceptMethod, bool isPositive, double? value = null)
-            : base(userId)
+            : base(userId, DecisionBoxSDK.Instance.CurrentSessionId, DecisionBoxSDK.Instance.GetAppID())
         {
             RulesetId = rulesetId ?? throw new ArgumentNullException(nameof(rulesetId));
             OfferMethod = offerMethod;
@@ -303,7 +362,7 @@ namespace DecisionBox.Models
         }
 
         public ActionOutcomeRecordedEvent(string userId, string rulesetId, OfferMethod offerMethod, DeclineReason declineReason, bool isPositive, double? value = null)
-            : base(userId)
+            : base(userId, DecisionBoxSDK.Instance.CurrentSessionId, DecisionBoxSDK.Instance.GetAppID())
         {
             RulesetId = rulesetId ?? throw new ArgumentNullException(nameof(rulesetId));
             OfferMethod = offerMethod;
@@ -332,10 +391,11 @@ namespace DecisionBox.Models
     public class LevelFinishedEvent : EventData
     {
         public override string EventType => "LevelFinished";
+        [JsonIgnore]
         public int LevelNumber { get; }
 
         public LevelFinishedEvent(string userId, int levelNumber)
-            : base(userId)
+            : base(userId, DecisionBoxSDK.Instance.CurrentSessionId, DecisionBoxSDK.Instance.GetAppID())
         {
             LevelNumber = levelNumber;
         }
@@ -355,10 +415,11 @@ namespace DecisionBox.Models
     public class LevelSuccessEvent : EventData
     {
         public override string EventType => "LevelSuccess";
+        [JsonIgnore]
         public int LevelNumber { get; }
 
         public LevelSuccessEvent(string userId, int levelNumber)
-            : base(userId)
+            : base(userId, DecisionBoxSDK.Instance.CurrentSessionId, DecisionBoxSDK.Instance.GetAppID())
         {
             LevelNumber = levelNumber;
         }
@@ -378,11 +439,13 @@ namespace DecisionBox.Models
     public class LevelFailedEvent : EventData
     {
         public override string EventType => "LevelFailed";
+        [JsonIgnore]
         public int LevelNumber { get; }
+        [JsonIgnore]
         public FailureReason FailureReason { get; }
 
         public LevelFailedEvent(string userId, int levelNumber, FailureReason failureReason)
-            : base(userId)
+            : base(userId, DecisionBoxSDK.Instance.CurrentSessionId, DecisionBoxSDK.Instance.GetAppID())
         {
             LevelNumber = levelNumber;
             FailureReason = failureReason;
@@ -404,13 +467,17 @@ namespace DecisionBox.Models
     public class GameEndedEvent : EventData
     {
         public override string EventType => "GameEnded";
+        [JsonIgnore]
         public int CurrentScore { get; }
+        [JsonIgnore]
         public int? FinalSoftCurrency { get; }
+        [JsonIgnore]
         public int? FinalHardCurrency { get; }
+        [JsonIgnore]
         public int? FinalPremiumCurrency { get; }
 
         public GameEndedEvent(string userId, int currentScore, int? finalSoftCurrency = null, int? finalHardCurrency = null, int? finalPremiumCurrency = null)
-            : base(userId)
+            : base(userId, DecisionBoxSDK.Instance.CurrentSessionId, DecisionBoxSDK.Instance.GetAppID())
         {
             CurrentScore = currentScore;
             FinalSoftCurrency = finalSoftCurrency;
@@ -437,12 +504,15 @@ namespace DecisionBox.Models
     public class GameOverEvent : EventData
     {
         public override string EventType => "GameOver";
+        [JsonIgnore]
         public int LevelNumber { get; }
+        [JsonIgnore]
         public int CurrentScore { get; }
+        [JsonIgnore]
         public FailureReason GameOverReason { get; }
 
         public GameOverEvent(string userId, int levelNumber, int currentScore, FailureReason gameOverReason)
-            : base(userId)
+            : base(userId, DecisionBoxSDK.Instance.CurrentSessionId, DecisionBoxSDK.Instance.GetAppID())
         {
             LevelNumber = levelNumber;
             CurrentScore = currentScore;
@@ -466,12 +536,15 @@ namespace DecisionBox.Models
     public class MetricRecordedEvent : EventData
     {
         public override string EventType => "MetricRecorded";
+        [JsonIgnore]
         public int LevelNumber { get; }
+        [JsonIgnore]
         public MetricType Metric { get; }
+        [JsonIgnore]
         public float MetricValue { get; }
 
         public MetricRecordedEvent(string userId, int levelNumber, MetricType metric, float metricValue)
-            : base(userId)
+            : base(userId, DecisionBoxSDK.Instance.CurrentSessionId, DecisionBoxSDK.Instance.GetAppID())
         {
             LevelNumber = levelNumber;
             Metric = metric;
@@ -495,12 +568,15 @@ namespace DecisionBox.Models
     public class SessionStartedEvent : EventData
     {
         public override string EventType => "SessionStarted";
+        [JsonIgnore]
         public string GameVersion { get; }
+        [JsonIgnore]
         public PlatformType Platform { get; }
+        [JsonIgnore]
         public string DeviceModel { get; }
 
         public SessionStartedEvent(string userId, string gameVersion, PlatformType platform, string deviceModel)
-            : base(userId)
+            : base(userId, DecisionBoxSDK.Instance.CurrentSessionId, DecisionBoxSDK.Instance.GetAppID())
         {
             GameVersion = gameVersion ?? throw new ArgumentNullException(nameof(gameVersion));
             Platform = platform;
@@ -524,10 +600,11 @@ namespace DecisionBox.Models
     public class SessionEndedEvent : EventData
     {
         public override string EventType => "SessionEnded";
+        [JsonIgnore]
         public string Reason { get; }
 
         public SessionEndedEvent(string userId, string reason)
-            : base(userId)
+            : base(userId, DecisionBoxSDK.Instance.CurrentSessionId, DecisionBoxSDK.Instance.GetAppID())
         {
             Reason = reason ?? throw new ArgumentNullException(nameof(reason));
         }
@@ -547,10 +624,11 @@ namespace DecisionBox.Models
     public class UserLocationTextEvent : EventData
     {
         public override string EventType => "UserLocationText";
+        [JsonIgnore]
         public string Location { get; }
 
         public UserLocationTextEvent(string userId, string location)
-            : base(userId)
+            : base(userId, DecisionBoxSDK.Instance.CurrentSessionId, DecisionBoxSDK.Instance.GetAppID())
         {
             Location = location ?? throw new ArgumentNullException(nameof(location));
         }
@@ -570,11 +648,13 @@ namespace DecisionBox.Models
     public class UserLocationLatLngEvent : EventData
     {
         public override string EventType => "UserLocationLatLng";
+        [JsonIgnore]
         public double Latitude { get; }
+        [JsonIgnore]
         public double Longitude { get; }
 
         public UserLocationLatLngEvent(string userId, double latitude, double longitude)
-            : base(userId)
+            : base(userId, DecisionBoxSDK.Instance.CurrentSessionId, DecisionBoxSDK.Instance.GetAppID())
         {
             Latitude = latitude;
             Longitude = longitude;
@@ -596,10 +676,11 @@ namespace DecisionBox.Models
     public class UserLocationIPEvent : EventData
     {
         public override string EventType => "UserLocationIP";
+        [JsonIgnore]
         public string IpAddress { get; }
 
         public UserLocationIPEvent(string userId, string ipAddress)
-            : base(userId)
+            : base(userId, DecisionBoxSDK.Instance.CurrentSessionId, DecisionBoxSDK.Instance.GetAppID())
         {
             IpAddress = ipAddress ?? throw new ArgumentNullException(nameof(ipAddress));
         }
@@ -609,47 +690,6 @@ namespace DecisionBox.Models
             return new Dictionary<string, object>
             {
                 ["ipAddress"] = IpAddress
-            };
-        }
-    }
-
-    /// <summary>
-    /// User touch event
-    /// </summary>
-    public class UserTouchEvent : EventData
-    {
-        public override string EventType => "UserTouch";
-        public int FingerId { get; }
-        public string Phase { get; }
-        public float NormalizedX { get; }
-        public float NormalizedY { get; }
-        public float RawX { get; }
-        public float RawY { get; }
-        public float Timestamp { get; }
-
-        public UserTouchEvent(string userId, int fingerId, string phase, float normalizedX, float normalizedY, float rawX, float rawY, float timestamp)
-            : base(userId)
-        {
-            FingerId = fingerId;
-            Phase = phase ?? throw new ArgumentNullException(nameof(phase));
-            NormalizedX = normalizedX;
-            NormalizedY = normalizedY;
-            RawX = rawX;
-            RawY = rawY;
-            Timestamp = timestamp;
-        }
-
-        public override Dictionary<string, object> GetMetadata()
-        {
-            return new Dictionary<string, object>
-            {
-                ["fingerId"] = FingerId,
-                ["phase"] = Phase,
-                ["normalizedX"] = NormalizedX,
-                ["normalizedY"] = NormalizedY,
-                ["rawX"] = RawX,
-                ["rawY"] = RawY,
-                ["timestamp"] = Timestamp
             };
         }
     }

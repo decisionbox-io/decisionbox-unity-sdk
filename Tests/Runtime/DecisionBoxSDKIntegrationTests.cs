@@ -15,7 +15,6 @@ namespace DecisionBox.Tests.Integration
     [TestFixture]
     public class DecisionBoxSDKIntegrationTests
     {
-        private GameObject testObject;
         private DecisionBoxSDK sdk;
         
         // Integration test credentials - Updated with new app
@@ -26,8 +25,12 @@ namespace DecisionBox.Tests.Integration
         [SetUp]
         public void Setup()
         {
-            testObject = new GameObject("IntegrationTestSDK");
-            sdk = testObject.AddComponent<DecisionBoxSDK>();
+            // Reset singleton instance before each test
+            var instanceField = typeof(DecisionBoxSDK).GetField("_instance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            instanceField?.SetValue(null, null);
+            
+            // Get singleton instance
+            sdk = DecisionBoxSDK.Instance;
             
             // SDK is now accessible via Instance property
             Assert.AreEqual(sdk, DecisionBoxSDK.Instance);
@@ -36,9 +39,13 @@ namespace DecisionBox.Tests.Integration
         [TearDown]
         public void TearDown()
         {
-            if (testObject != null)
+            // Clean up singleton instance
+            var instanceField = typeof(DecisionBoxSDK).GetField("_instance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            var currentInstance = instanceField?.GetValue(null) as DecisionBoxSDK;
+            if (currentInstance != null)
             {
-                UnityEngine.Object.DestroyImmediate(testObject);
+                UnityEngine.Object.DestroyImmediate(currentInstance.gameObject);
+                instanceField.SetValue(null, null);
             }
             PlayerPrefs.DeleteAll();
         }
@@ -65,9 +72,11 @@ namespace DecisionBox.Tests.Integration
         {
             yield return InitializeSDKWithRealAPI();
 
-            // Access SDK via Instance property
-            var instance = DecisionBoxSDK.Instance;
-            Assert.AreEqual(sdk, instance, "Instance should return the same SDK object");
+            // Access SDK via Instance property from multiple places
+            var instance1 = DecisionBoxSDK.Instance;
+            var instance2 = DecisionBoxSDK.Instance;
+            Assert.AreSame(instance1, instance2, "Instance should always return the same object");
+            Assert.AreEqual(sdk, instance1, "Instance should return the same SDK object");
 
             // Send event using Instance
             var task = DecisionBoxSDK.Instance.SendLevelStartedAsync(levelNumber: 1);
