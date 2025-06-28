@@ -25,11 +25,6 @@ namespace DecisionBox.Core
         [SerializeField] private bool enableLogging = false;
 
         public static DecisionBoxSDK Instance { get; private set; } = null!;
-
-        // API URLs
-        private string ApiUrl => environment == "development" 
-            ? "https://api.dev.decisionbox.io" 
-            : "https://api.decisionbox.io";
             
         private string EventApiUrl => environment == "development" 
             ? "https://eventapi.dev.decisionbox.io/events" 
@@ -61,6 +56,7 @@ namespace DecisionBox.Core
             }
             else
             {
+                SDKLogWarning("Another DecisionBox SDK instance already exists. Destroying duplicate.");
                 Destroy(gameObject);
             }
         }
@@ -106,6 +102,18 @@ namespace DecisionBox.Core
         #region Public API
 
         /// <summary>
+        /// Configure the SDK credentials. Can be called before InitializeAsync.
+        /// </summary>
+        public void Configure(string appId, string appSecret, string environment = "production", bool enableLogging = false)
+        {
+            this.appId = appId;
+            this.appSecret = appSecret;
+            this.environment = environment;
+            this.enableLogging = enableLogging;
+            SDKLog("SDK configured with new credentials");
+        }
+
+        /// <summary>
         /// Initialize the SDK. Must be called first.
         /// </summary>
         public async Task<bool> InitializeAsync(string? userId = null)
@@ -113,6 +121,13 @@ namespace DecisionBox.Core
             try
             {
                 SDKLog("Initializing SDK...");
+
+                // Validate configuration
+                if (string.IsNullOrEmpty(appId) || string.IsNullOrEmpty(appSecret))
+                {
+                    SDKLogError("SDK not configured. Please set App ID and App Secret in the Inspector or call Configure() method.");
+                    return false;
+                }
 
                 // Authenticate and get token
                 if (!await AuthenticateAsync())
@@ -400,9 +415,9 @@ namespace DecisionBox.Core
         }
 
         /// <summary>
-        /// Send ActionOutcomeRecorded event
+        /// Send ActionOutcomeRecorded Positive event
         /// </summary>
-        public async Task<bool> SendActionOutcomeRecordedAsync(string? userId = null, string rulesetId = "", OfferMethod offerMethod = OfferMethod.WatchAd, bool isPositive = true, string outcome = "", double? value = null)
+        public async Task<bool> SendPositiveActionOutcomeRecordedAsync(string? userId, string rulesetId, OfferMethod offerMethod, AcceptMethod acceptMethod,  double value)
         {
             if (!ValidateSDKState()) return false;
 
@@ -410,8 +425,26 @@ namespace DecisionBox.Core
                 userId ?? currentUserId!,
                 rulesetId,
                 offerMethod,
-                isPositive,
-                outcome,
+                acceptMethod,
+                true,
+                value
+            );
+            return await SendEventAsync(eventData);
+        }
+
+                /// <summary>
+        /// Send ActionOutcomeRecorded Positive event
+        /// </summary>
+        public async Task<bool> SendNegativeActionOutcomeRecordedAsync(string? userId, string rulesetId, OfferMethod offerMethod, DeclineReason declineReason,  double value)
+        {
+            if (!ValidateSDKState()) return false;
+
+            var eventData = new ActionOutcomeRecordedEvent(
+                userId ?? currentUserId!,
+                rulesetId,
+                offerMethod,
+                declineReason,
+                false,
                 value
             );
             return await SendEventAsync(eventData);

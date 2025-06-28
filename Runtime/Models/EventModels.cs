@@ -288,17 +288,27 @@ namespace DecisionBox.Models
         public override string EventType => "ActionOutcomeRecorded";
         public string RulesetId { get; }
         public OfferMethod OfferMethod { get; }
-        public bool IsPositive { get; }
         public string Outcome { get; }
+        public bool IsPositive { get; }
         public double? Value { get; }
 
-        public ActionOutcomeRecordedEvent(string userId, string rulesetId, OfferMethod offerMethod, bool isPositive, string outcome, double? value = null)
+        public ActionOutcomeRecordedEvent(string userId, string rulesetId, OfferMethod offerMethod, AcceptMethod acceptMethod, bool isPositive, double? value = null)
             : base(userId)
         {
             RulesetId = rulesetId ?? throw new ArgumentNullException(nameof(rulesetId));
             OfferMethod = offerMethod;
+            Outcome = acceptMethod.ToString();
             IsPositive = isPositive;
-            Outcome = outcome ?? throw new ArgumentNullException(nameof(outcome));
+            Value = value;
+        }
+
+        public ActionOutcomeRecordedEvent(string userId, string rulesetId, OfferMethod offerMethod, DeclineReason declineReason, bool isPositive, double? value = null)
+            : base(userId)
+        {
+            RulesetId = rulesetId ?? throw new ArgumentNullException(nameof(rulesetId));
+            OfferMethod = offerMethod;
+            Outcome = declineReason.ToString();
+            IsPositive = isPositive;
             Value = value;
         }
 

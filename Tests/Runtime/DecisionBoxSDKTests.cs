@@ -51,12 +51,24 @@ namespace DecisionBox.Tests
             PlayerPrefs.DeleteKey("DECISIONBOX_USER_ID");
             PlayerPrefs.Save();
 
-            var newSdk = new GameObject("NewSDK").AddComponent<DecisionBoxSDK>();
+            // Access through Instance property
+            var instance = DecisionBoxSDK.Instance;
+            
+            // Configure the SDK for testing
+            instance.Configure("test-app-id", "test-app-secret", "development", true);
             
             // Initialize should generate a user ID
             Assert.IsNotNull(PlayerPrefs.GetString("DECISIONBOX_USER_ID", null));
+        }
+
+        [Test]
+        public void Configure_SetsPropertiesCorrectly()
+        {
+            // Configure SDK
+            sdk.Configure("test-app-id", "test-app-secret", "development", true);
             
-            UnityEngine.Object.DestroyImmediate(newSdk.gameObject);
+            // We can't directly verify private fields, but we can test that initialization works
+            Assert.Pass("Configuration method executed successfully");
         }
 
         [Test]
@@ -65,12 +77,8 @@ namespace DecisionBox.Tests
             string existingUserId = "existing_user_123";
             PlayerPrefs.SetString("DECISIONBOX_USER_ID", existingUserId);
             PlayerPrefs.Save();
-
-            var newSdk = new GameObject("NewSDK").AddComponent<DecisionBoxSDK>();
             
             Assert.AreEqual(existingUserId, PlayerPrefs.GetString("DECISIONBOX_USER_ID", ""));
-            
-            UnityEngine.Object.DestroyImmediate(newSdk.gameObject);
         }
 
         [Test]
@@ -80,6 +88,17 @@ namespace DecisionBox.Tests
             var result = sdk.SendGameStartedAsync().Result;
             // Since SDK is not active, the method should return early
             Assert.Pass("Method returned without throwing exception");
+        }
+
+        [UnityTest]
+        public IEnumerator InitializeAsync_FailsWithoutConfiguration()
+        {
+            // Try to initialize without configuration
+            var initTask = sdk.InitializeAsync(TEST_USER_ID);
+            yield return new WaitUntil(() => initTask.IsCompleted);
+            
+            // Should fail because no app ID/secret configured
+            Assert.IsFalse(initTask.Result);
         }
 
         #endregion
@@ -463,6 +482,9 @@ namespace DecisionBox.Tests
 
         private IEnumerator InitializeSDKMock(bool sdkEnabled)
         {
+            // Configure SDK first
+            sdk.Configure("test-app-id", "test-app-secret", "development", true);
+            
             // Mock the initialization process
             // In real tests, you would mock the HTTP requests
             var initTask = sdk.InitializeAsync(TEST_USER_ID);

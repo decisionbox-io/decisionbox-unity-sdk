@@ -29,9 +29,8 @@ namespace DecisionBox.Tests.Integration
             testObject = new GameObject("IntegrationTestSDK");
             sdk = testObject.AddComponent<DecisionBoxSDK>();
             
-            // Configure SDK with test credentials
-            // Note: In Unity, we'd normally set these via Inspector
-            // For tests, we'll use reflection or a test-specific initialization
+            // SDK is now accessible via Instance property
+            Assert.AreEqual(sdk, DecisionBoxSDK.Instance);
         }
 
         [TearDown]
@@ -58,6 +57,22 @@ namespace DecisionBox.Tests.Integration
             yield return new WaitUntil(() => initTask.IsCompleted);
 
             Assert.IsTrue(initTask.Result, "SDK should initialize successfully with real API");
+        }
+
+        [UnityTest]
+        [Category("Integration")]
+        public IEnumerator Instance_AccessibleFromAnywhere()
+        {
+            yield return InitializeSDKWithRealAPI();
+
+            // Access SDK via Instance property
+            var instance = DecisionBoxSDK.Instance;
+            Assert.AreEqual(sdk, instance, "Instance should return the same SDK object");
+
+            // Send event using Instance
+            var task = DecisionBoxSDK.Instance.SendLevelStartedAsync(levelNumber: 1);
+            yield return new WaitUntil(() => task.IsCompleted);
+            Assert.IsTrue(task.Result, "Should be able to send events via Instance property");
         }
 
         [UnityTest]
@@ -299,20 +314,8 @@ namespace DecisionBox.Tests.Integration
 
         private void SetSDKConfiguration()
         {
-            // Use reflection to set private fields for testing
-            var appIdField = typeof(DecisionBoxSDK).GetField("appId", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var appSecretField = typeof(DecisionBoxSDK).GetField("appSecret", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var environmentField = typeof(DecisionBoxSDK).GetField("environment", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var enableLoggingField = typeof(DecisionBoxSDK).GetField("enableLogging", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-
-            appIdField?.SetValue(sdk, APP_ID);
-            appSecretField?.SetValue(sdk, APP_SECRET);
-            environmentField?.SetValue(sdk, ENVIRONMENT);
-            enableLoggingField?.SetValue(sdk, true);
+            // Use the new Configure method
+            sdk.Configure(APP_ID, APP_SECRET, ENVIRONMENT, true);
         }
 
         private IEnumerator InitializeSDKWithRealAPI()

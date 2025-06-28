@@ -28,9 +28,26 @@ Advanced analytics and real-time insights for Unity games with strongly-typed ev
 
 ## 🎯 Quick Start
 
-### 1. Setup SDK
+### 1. Initial Setup (One-time)
 
-Create a GameObject with the DecisionBoxSDK component:
+#### Option A: Using the Setup Window (Recommended)
+1. Go to **DecisionBox > Setup SDK** in Unity menu
+2. Enter your App ID and App Secret
+3. Click "Create Configured SDK GameObject"
+
+#### Option B: Manual Setup
+1. Go to **DecisionBox > Create SDK GameObject** in Unity menu
+2. Configure the SDK in the Inspector:
+   - **App ID**: Your DecisionBox application ID
+   - **App Secret**: Your DecisionBox application secret  
+   - **Environment**: `production` or `development`
+   - **Enable Logging**: Check for debug logs
+
+The SDK GameObject will persist across scenes (DontDestroyOnLoad).
+
+### 2. Access SDK from Anywhere
+
+Once the SDK GameObject is created, you can access it directly from any script:
 
 ```csharp
 using UnityEngine;
@@ -39,27 +56,13 @@ using DecisionBox.Models;
 
 public class GameManager : MonoBehaviour
 {
-    private DecisionBoxSDK sdk;
-    
     private async void Start()
     {
-        // Find or create SDK GameObject
-        var sdkObject = GameObject.Find("DecisionBoxSDK");
-        if (sdkObject == null)
-        {
-            sdkObject = new GameObject("DecisionBoxSDK");
-            DontDestroyOnLoad(sdkObject);
-        }
+        // Access the SDK instance directly
+        var sdk = DecisionBoxSDK.Instance;
         
-        // Add SDK component
-        sdk = sdkObject.GetComponent<DecisionBoxSDK>();
-        if (sdk == null)
-        {
-            sdk = sdkObject.AddComponent<DecisionBoxSDK>();
-        }
-        
-        // Initialize SDK (null userId will generate a GUID)
-        bool initialized = await sdk.InitializeAsync(userId: null);
+        // Initialize SDK (only needed once, usually at game start)
+        bool initialized = await sdk.InitializeAsync();
         
         if (initialized)
         {
@@ -70,16 +73,17 @@ public class GameManager : MonoBehaviour
 }
 ```
 
-### 2. Configure in Inspector
+### 3. Use SDK Throughout Your Game
 
-1. Select the DecisionBoxSDK GameObject
-2. Configure in the Inspector:
-   - **App ID**: Your DecisionBox application ID
-   - **App Secret**: Your DecisionBox application secret  
-   - **API URL**: `https://api.decisionbox.io` (default)
-   - **Enable Logging**: Check for debug logs
+From any script in your game:
 
-### 3. Send Strongly-Typed Events
+```csharp
+// Send events from anywhere - no need to store reference
+await DecisionBoxSDK.Instance.SendLevelStartedAsync(levelNumber: 1);
+await DecisionBoxSDK.Instance.SendScoreUpdatedAsync(levelNumber: 1, currentScore: 100);
+```
+
+### 4. Send Strongly-Typed Events
 
 All events use enums and strongly-typed parameters:
 
@@ -201,20 +205,20 @@ using DecisionBox.Models;
 
 public class GameController : MonoBehaviour
 {
-    private DecisionBoxSDK sdk;
     private int currentLevel = 1;
     
     private async void Start()
     {
-        // Initialize SDK
-        var sdkObject = new GameObject("DecisionBoxSDK");
-        sdk = sdkObject.AddComponent<DecisionBoxSDK>();
-        
-        bool initialized = await sdk.InitializeAsync();
-        if (!initialized) return;
+        // Initialize SDK (assumes SDK GameObject already exists in scene)
+        bool initialized = await DecisionBoxSDK.Instance.InitializeAsync();
+        if (!initialized) 
+        {
+            Debug.LogError("Failed to initialize DecisionBox SDK!");
+            return;
+        }
         
         // Start game
-        await sdk.SendGameStartedAsync(
+        await DecisionBoxSDK.Instance.SendGameStartedAsync(
             initialSoftCurrency: 100,
             initialHardCurrency: 10
         );
@@ -224,7 +228,7 @@ public class GameController : MonoBehaviour
     
     private async void StartLevel()
     {
-        await sdk.SendLevelStartedAsync(
+        await DecisionBoxSDK.Instance.SendLevelStartedAsync(
             levelNumber: currentLevel,
             levelName: $"Level {currentLevel}",
             difficulty: currentLevel < 5 ? "Easy" : "Hard"
@@ -233,6 +237,8 @@ public class GameController : MonoBehaviour
     
     public async void OnLevelComplete(int score)
     {
+        var sdk = DecisionBoxSDK.Instance;
+        
         // Send success event
         await sdk.SendLevelSuccessAsync(levelNumber: currentLevel);
         
@@ -257,7 +263,7 @@ public class GameController : MonoBehaviour
     
     public async void OnLevelFailed(FailureReason reason)
     {
-        await sdk.SendLevelFailedAsync(
+        await DecisionBoxSDK.Instance.SendLevelFailedAsync(
             levelNumber: currentLevel,
             failureReason: reason
         );
@@ -265,7 +271,7 @@ public class GameController : MonoBehaviour
     
     public async void OnBoosterPurchased(BoosterType booster)
     {
-        await sdk.SendBoosterAcceptedAsync(
+        await DecisionBoxSDK.Instance.SendBoosterAcceptedAsync(
             levelNumber: currentLevel,
             boosterType: booster,
             acceptMethod: AcceptMethod.SpendCurrency,

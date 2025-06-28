@@ -106,25 +106,6 @@ namespace DecisionBox.Models
     }
 
     /// <summary>
-    /// WebSocket message structure
-    /// </summary>
-    [System.Serializable]
-    public class WebSocketMessage
-    {
-        [JsonProperty("type")]
-        public string? type { get; set; }
-
-        [JsonProperty("data")]
-        public object? data { get; set; }
-
-        [JsonProperty("timestamp")]
-        public long timestamp { get; set; }
-
-        [JsonProperty("session_id")]
-        public string? session_id { get; set; }
-    }
-
-    /// <summary>
     /// API error response
     /// </summary>
     [System.Serializable]
