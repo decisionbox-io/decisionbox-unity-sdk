@@ -16,6 +16,7 @@ Advanced analytics and real-time insights for Unity games with strongly-typed ev
 - **Type-Safe Enums**: All event parameters use enums instead of strings
 - **Automatic User ID**: Generates and persists user ID if not provided
 - **Background Handling**: Proper session management on app pause/resume
+- **Push Notifications**: Send device tokens for push notification capability
 
 ## 📦 Installation
 
@@ -89,25 +90,25 @@ All events use enums and strongly-typed parameters:
 
 ```csharp
 // Game events
-await sdk.SendGameStartedAsync(
+await DecisionBoxSDK.Instance.SendGameStartedAsync(
     initialSoftCurrency: 100,
     initialHardCurrency: 50
 );
 
 // Level events with enums
-await sdk.SendLevelStartedAsync(
+await DecisionBoxSDK.Instance.SendLevelStartedAsync(
     levelNumber: 1,
     levelName: "Tutorial",
     difficulty: "Easy"
 );
 
-await sdk.SendLevelFailedAsync(
+await DecisionBoxSDK.Instance.SendLevelFailedAsync(
     levelNumber: 1,
     failureReason: FailureReason.TimeOut  // Enum, not string!
 );
 
 // Currency events with strongly-typed enums
-await sdk.SendCurrencyBalanceUpdatedAsync(
+await DecisionBoxSDK.Instance.SendCurrencyBalanceUpdatedAsync(
     currencyType: CurrencyType.Soft,     // Enum
     oldBalance: 100,
     currentBalance: 150,
@@ -116,7 +117,7 @@ await sdk.SendCurrencyBalanceUpdatedAsync(
 );
 
 // Booster events
-await sdk.SendBoosterOfferedAsync(
+await DecisionBoxSDK.Instance.SendBoosterOfferedAsync(
     levelNumber: 1,
     boosterType: BoosterType.SpeedBoost,  // Enum
     offerMethod: OfferMethod.WatchAd,     // Enum
@@ -124,7 +125,7 @@ await sdk.SendBoosterOfferedAsync(
 );
 
 // Metrics
-await sdk.SendMetricRecordedAsync(
+await DecisionBoxSDK.Instance.SendMetricRecordedAsync(
     levelNumber: 1,
     metric: MetricType.Score,  // Enum
     metricValue: 1500f
@@ -152,6 +153,7 @@ All events are strongly-typed methods on the SDK:
 - `SendUserLocationTextAsync` - Text location
 - `SendUserLocationLatLngAsync` - GPS coordinates
 - `SendUserLocationIPAsync` - IP address location
+- `SendUserDeviceTokenAsync` - Device token for push notifications
 
 ### Enums Reference
 
@@ -182,18 +184,36 @@ MetricType.EnemiesDefeated
 // ... and more
 ```
 
+## 📱 Push Notifications
+
+Send device tokens to enable push notifications:
+
+```csharp
+// Send device token for push notifications
+await DecisionBoxSDK.Instance.SendUserDeviceTokenAsync(
+    userId: "user123",  // Optional - uses current user ID if not provided
+    deviceToken: "your-device-token-here"
+);
+
+// Example with Firebase/FCM
+public async void OnTokenReceived(string token)
+{
+    await DecisionBoxSDK.Instance.SendUserDeviceTokenAsync(deviceToken: token);
+}
+```
+
 ## 🔌 WebSocket Support
 
 Real-time bidirectional communication:
 
 ```csharp
 // Register for custom events
-sdk.On("offer_available", (message) => {
+DecisionBoxSDK.Instance.On("offer_available", (message) => {
     Debug.Log($"Received offer: {message}");
 });
 
 // Unregister when done
-sdk.Off("offer_available", callback);
+DecisionBoxSDK.Instance.Off("offer_available", callback);
 ```
 
 ## 🎮 Complete Example
@@ -215,6 +235,13 @@ public class GameController : MonoBehaviour
         {
             Debug.LogError("Failed to initialize DecisionBox SDK!");
             return;
+        }
+        
+        // Send device token if available (e.g., from Firebase)
+        string deviceToken = GetDeviceToken(); // Your method to get token
+        if (!string.IsNullOrEmpty(deviceToken))
+        {
+            await DecisionBoxSDK.Instance.SendUserDeviceTokenAsync(deviceToken: deviceToken);
         }
         
         // Start game
@@ -283,6 +310,12 @@ public class GameController : MonoBehaviour
     {
         // Your currency logic
         return 100;
+    }
+    
+    private string GetDeviceToken()
+    {
+        // Your device token retrieval logic (e.g., from Firebase)
+        return "";
     }
 }
 ```
