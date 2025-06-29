@@ -28,16 +28,21 @@ namespace DecisionBox.Models
         [JsonProperty("timestamp")]
         public long Timestamp { get; set; }
 
+        private Dictionary<string, object>? _metadata;
+
         [JsonProperty("metadata")]
-        public Dictionary<string, object> Metadata { get; set; } = new Dictionary<string, object>();
+        public Dictionary<string, object> Metadata 
+        { 
+            get => _metadata ??= GetMetadata();
+            set => _metadata = value;
+        }
 
         protected EventData(string userId, string sessionId, string appId)
         {
             UserId = userId ?? throw new ArgumentNullException(nameof(userId));
             SessionId = sessionId;
-            AppId = appId ?? "default_app_id"; // Default app ID can be set or passed in
+            AppId = appId ?? "default_app_id";
             Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            Metadata = GetMetadata();
         }
 
 
@@ -575,7 +580,7 @@ namespace DecisionBox.Models
         [JsonIgnore]
         public string DeviceModel { get; }
 
-        public SessionStartedEvent(string userId, string gameVersion, PlatformType platform, string deviceModel)
+        public SessionStartedEvent(string userId, string gameVersion, PlatformType platform, string deviceModel = "Unknown")
             : base(userId, DecisionBoxSDK.Instance.CurrentSessionId, DecisionBoxSDK.Instance.GetAppID())
         {
             GameVersion = gameVersion ?? throw new ArgumentNullException(nameof(gameVersion));
