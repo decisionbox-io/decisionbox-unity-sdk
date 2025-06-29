@@ -27,8 +27,8 @@ namespace DecisionBox.Core
         public static DecisionBoxSDK Instance { get; private set; } = null!;
             
         private string EventApiUrl => environment == "development" 
-            ? "https://eventapi.dev.decisionbox.io/events" 
-            : "https://eventapi.decisionbox.io/events";
+            ? "https://eventapi.dev.decisionbox.io" 
+            : "https://eventapi.decisionbox.io";
 
         private string websocketUrl => environment == "development"
             ? "wss://ws.dev.decisionbox.io/ws"
@@ -506,7 +506,21 @@ namespace DecisionBox.Core
             return await SendEventAsync(eventData);
         }
 
-        
+        /// <summary>
+        /// Send User Device Token 
+        /// </summary>
+        public async Task<bool> SendUserDeviceTokenAsync(string? userId = null, string deviceToken = "")
+        {
+            if (!ValidateSDKState()) return false;
+
+            var deviceTokenModel = new UserDeviceToken(
+                userId ?? currentUserId!,
+                GetPlatformType().ToString(),
+                deviceToken
+            );
+            return await SendDeviceTokenAsync(deviceTokenModel);
+        }
+
 
         #endregion
 
@@ -581,7 +595,7 @@ namespace DecisionBox.Core
                 string json = JsonConvert.SerializeObject(authRequest);
                 byte[] bodyData = Encoding.UTF8.GetBytes(json);
 
-                using (var request = new UnityWebRequest($"{EventApiUrl.Replace("/events", "")}/oauth/token", "POST"))
+                using (var request = new UnityWebRequest($"{EventApiUrl}/oauth/token", "POST"))
                 {
                     request.uploadHandler = new UploadHandlerRaw(bodyData);
                     request.downloadHandler = new DownloadHandlerBuffer();
@@ -627,7 +641,7 @@ namespace DecisionBox.Core
         {
             try
             {
-                using (var request = new UnityWebRequest($"{EventApiUrl.Replace("/events", "")}/apps/config?appid={appId}", "POST"))
+                using (var request = new UnityWebRequest($"{EventApiUrl}/apps/config?appid={appId}", "POST"))
                 {
                     request.uploadHandler = new UploadHandlerRaw(new byte[0]); // Empty body for POST
                     request.downloadHandler = new DownloadHandlerBuffer();
@@ -674,7 +688,7 @@ namespace DecisionBox.Core
                 string json = JsonConvert.SerializeObject(eventData);
                 byte[] bodyData = Encoding.UTF8.GetBytes(json);
 
-                using (var request = new UnityWebRequest(EventApiUrl, "POST"))
+                using (var request = new UnityWebRequest($"{EventApiUrl}/events", "POST"))
                 {
                     request.uploadHandler = new UploadHandlerRaw(bodyData);
                     request.downloadHandler = new DownloadHandlerBuffer();
@@ -706,6 +720,59 @@ namespace DecisionBox.Core
             catch (Exception ex)
             {
                 SDKLogError($"Event sending error: {ex.Message}");
+                return false;
+            }
+        }
+
+        private async Task<bool> SendDeviceTokenAsync(UserDeviceToken deviceToken)
+        {
+            try
+            {
+                // Check if token needs refresh
+                if (IsTokenExpired())
+                {
+                    if (!await RefreshTokenAsync())
+                    {
+                        SDKLogError("Failed to refresh token");
+                        return false;
+                    }
+                }
+
+                string json = JsonConvert.SerializeObject(deviceToken);
+                byte[] bodyData = Encoding.UTF8.GetBytes(json);
+
+                using (var request = new UnityWebRequest($"{EventApiUrl}/users/token", "POST"))
+                {
+                    request.uploadHandler = new UploadHandlerRaw(bodyData);
+                    request.downloadHandler = new DownloadHandlerBuffer();
+                    request.SetRequestHeader("Content-Type", "application/json");
+                    request.SetRequestHeader("Authorization", $"Bearer {jwtToken}");
+
+                    var operation = request.SendWebRequest();
+                    while (!operation.isDone)
+                    {
+                        await Task.Yield();
+                    }
+
+                    if (request.result == UnityWebRequest.Result.Success)
+                    {
+                        SDKLog($"Device token sent successfully: {deviceToken.DeviceToken}");
+                        return true;
+                    }
+                    else
+                    {
+                        SDKLogError($"Failed to send device token: {request.error} - {request.responseCode}");
+                        if (!string.IsNullOrEmpty(request.downloadHandler.text))
+                        {
+                            SDKLogError($"Response: {request.downloadHandler.text}");
+                        }
+                        return false;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                SDKLogError($"Device token sending error: {ex.Message}");
                 return false;
             }
         }
@@ -858,7 +925,7 @@ namespace DecisionBox.Core
                 string json = JsonConvert.SerializeObject(refreshRequest);
                 byte[] bodyData = Encoding.UTF8.GetBytes(json);
 
-                using (var request = new UnityWebRequest($"{EventApiUrl.Replace("/events", "")}/oauth/token/refresh", "POST"))
+                using (var request = new UnityWebRequest($"{EventApiUrl}/oauth/token/refresh", "POST"))
                 {
                     request.uploadHandler = new UploadHandlerRaw(bodyData);
                     request.downloadHandler = new DownloadHandlerBuffer();

@@ -53,6 +53,29 @@ namespace DecisionBox.Models
     }
 
     /// <summary>
+    /// User Device Token model
+    /// </summary>
+    [Serializable]
+    public class UserDeviceToken
+    {
+        [JsonProperty("user_id")]
+        public string UserId { get; set; }
+
+        [JsonProperty("platform")]
+        public string Platform { get; set; }
+
+        [JsonProperty("device_token")]
+        public string DeviceToken { get; set; } 
+
+        public UserDeviceToken(string userId, string platform, string deviceToken)
+        {
+            UserId = userId;
+            Platform = platform;
+            DeviceToken = deviceToken;
+        }
+    }
+
+    /// <summary>
     /// Game started event
     /// </summary>
     public class GameStartedEvent : EventData
