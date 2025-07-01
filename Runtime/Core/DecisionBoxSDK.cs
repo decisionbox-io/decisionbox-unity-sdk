@@ -824,7 +824,7 @@ namespace DecisionBox.Core
                     // Send auth message
                     var authMessage = new
                     {
-                        type = "auth",
+                        type = "authenticate",
                         token = jwtToken,
                         session_id = CurrentSessionId
                     };
