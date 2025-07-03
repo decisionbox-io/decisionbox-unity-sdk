@@ -615,7 +615,7 @@ namespace DecisionBox.Models
         {
             return new Dictionary<string, object>
             {
-                ["gameVersion"] = GameVersion,
+                ["version"] = GameVersion,
                 ["platform"] = Platform.ToString(),
                 ["deviceModel"] = DeviceModel
             };
