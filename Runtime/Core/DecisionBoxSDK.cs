@@ -860,6 +860,24 @@ namespace DecisionBox.Core
             try
             {
                 var wsMessage = JsonConvert.DeserializeObject<WebSocketMessage>(message);
+                
+                // Process UIKit messages if applicable
+                if (wsMessage != null && wsMessage.UseTemplate)
+                {
+                    try
+                    {
+                        if (UIKit.Core.UIKitManager.Instance.ProcessMessage(wsMessage))
+                        {
+                            SDKLog("Message processed by UIKit");
+                        }
+                    }
+                    catch (Exception uiKitEx)
+                    {
+                        SDKLogError($"UIKit message processing error: {uiKitEx.Message}");
+                    }
+                }
+                
+                // Continue with normal handler processing
                 if (wsMessage?.type != null && websocketHandlers.ContainsKey(wsMessage.type))
                 {
                     foreach (var handler in websocketHandlers[wsMessage.type])

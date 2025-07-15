@@ -1,60 +1,23 @@
 {
   "name": "io.decisionbox.sdk",
   "version": "1.0.0",
-  "displayName": "DecisionBox Unity SDK",
-  "description": "Advanced analytics and real-time insights for Unity games. Track player behavior, game events, and performance metrics with ease.",
+  "displayName": "DecisionBox SDK",
+  "description": "DecisionBox Unity SDK with UIKit dynamic UI rendering",
   "unity": "2020.3",
-  "unityRelease": "0f1",
-  "documentationUrl": "https://github.com/decisionbox-io/decisionbox-unity-sdk/blob/main/README.md",
-  "changelogUrl": "https://github.com/decisionbox-io/decisionbox-unity-sdk/blob/main/CHANGELOG.md",
-  "licensesUrl": "https://github.com/decisionbox-io/decisionbox-unity-sdk/blob/main/LICENSE.md",
+  "dependencies": {
+    "com.unity.textmeshpro": "3.0.6",
+    "com.unity.nuget.newtonsoft-json": "3.0.2"
+  },
   "keywords": [
+    "decisionbox",
+    "sdk",
     "analytics",
-    "gaming",
-    "telemetry",
-    "unity",
-    "player-tracking",
-    "game-analytics",
-    "real-time",
-    "insights",
     "monetization",
-    "retention"
+    "uikit"
   ],
   "author": {
     "name": "DecisionBox",
-    "email": "sdk@decisionbox.io",
+    "email": "support@decisionbox.io",
     "url": "https://decisionbox.io"
-  },
-  "license": "SEE LICENSE IN LICENSE.md",
-  "type": "library",
-  "samples": [
-    {
-      "displayName": "Basic Usage",
-      "description": "Simple SDK setup and basic event tracking",
-      "path": "Samples~/BasicUsage"
-    },
-    {
-      "displayName": "Basic Analytics",
-      "description": "Simple player tracking and event logging",
-      "path": "Samples~/BasicAnalytics"
-    },
-    {
-      "displayName": "Gaming Events",
-      "description": "Comprehensive game event tracking examples",
-      "path": "Samples~/GamingEvents"
-    },
-    {
-      "displayName": "Real-time Features",
-      "description": "WebSocket integration and real-time communication",
-      "path": "Samples~/RealtimeFeatures"
-    },
-    {
-      "displayName": "Advanced Integration",
-      "description": "Custom event tracking and advanced use cases",
-      "path": "Samples~/AdvancedIntegration"
-    }
-  ],
-  "dependencies": {
-    "com.unity.nuget.newtonsoft-json": "3.2.1"
   }
 }

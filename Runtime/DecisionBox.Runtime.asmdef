@@ -1,7 +1,9 @@
 {
     "name": "DecisionBox.Runtime",
     "rootNamespace": "DecisionBox",
-    "references": [],
+    "references": [
+        "Unity.TextMeshPro"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
