@@ -167,34 +167,11 @@ namespace DecisionBox.UIKit.Core
                     var component = componentFactory.CreateComponent(componentData, _container);
                     if (component != null)
                     {
-                        _components[componentData.Id] = component;
+                        // Collect all components (including children) recursively
+                        CollectAllComponents(componentData, component);
                         
-                        // Handle component actions
-                        if (component is IInteractableComponent interactable)
-                        {
-                            interactable.OnAction += (action) =>
-                            {
-                                UIKitManager.Instance.HandleTemplateAction(_templateId, action);
-                            };
-                        }
-                        
-                        // Load assets if needed
-                        if (!string.IsNullOrEmpty(componentData.AssetUrl) && component is IAssetComponent assetComponent)
-                        {
-                            Debug.Log($"[UIKit] Loading asset for {componentData.Id} from URL: {componentData.AssetUrl}");
-                            assetLoader.LoadTexture(componentData.AssetUrl, (texture, error) =>
-                            {
-                                if (texture != null)
-                                {
-                                    Debug.Log($"[UIKit] Successfully loaded texture for {componentData.Id}: {texture.width}x{texture.height}");
-                                    assetComponent.SetAsset(texture);
-                                }
-                                else
-                                {
-                                    Debug.LogError($"[UIKit] Failed to load asset for {componentData.Id}: {error}");
-                                }
-                            });
-                        }
+                        // Process this component and all its children for asset loading
+                        ProcessComponentAssets(componentData, assetLoader);
                     }
                 }
                 catch (Exception e)
@@ -224,6 +201,76 @@ namespace DecisionBox.UIKit.Core
             
             // Rebuild the template
             Build(UIKitManager.Instance.ComponentFactory, UIKitManager.Instance.AssetLoader);
+        }
+        
+        /// <summary>
+        /// Recursively collects all components (including children) into the _components dictionary
+        /// </summary>
+        private void CollectAllComponents(UIKitComponent componentData, IUIKitComponent component)
+        {
+            // Add this component to the collection
+            _components[componentData.Id] = component;
+            
+            // Handle component actions
+            if (component is IInteractableComponent interactable)
+            {
+                interactable.OnAction += (action) =>
+                {
+                    UIKitManager.Instance.HandleTemplateAction(_templateId, action);
+                };
+            }
+            
+            // Recursively collect children
+            if (componentData.Children != null && component is IContainerComponent container)
+            {
+                var children = container.GetChildren();
+                for (int i = 0; i < componentData.Children.Count && i < children.Length; i++)
+                {
+                    CollectAllComponents(componentData.Children[i], children[i]);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Recursively processes a component and its children for asset loading
+        /// </summary>
+        private void ProcessComponentAssets(UIKitComponent componentData, AssetLoader assetLoader)
+        {
+            // Load assets if needed for this component
+            if (_components.TryGetValue(componentData.Id, out var component))
+            {
+                Debug.Log($"[UIKit] Checking asset loading for {componentData.Id}: AssetUrl='{componentData.AssetUrl}', IsAssetComponent={component is IAssetComponent}");
+                
+                if (!string.IsNullOrEmpty(componentData.AssetUrl) && component is IAssetComponent assetComponent)
+                {
+                    Debug.Log($"[UIKit] Loading asset for {componentData.Id} from URL: {componentData.AssetUrl}");
+                    assetLoader.LoadTexture(componentData.AssetUrl, (texture, error) =>
+                    {
+                        if (texture != null)
+                        {
+                            Debug.Log($"[UIKit] Successfully loaded texture for {componentData.Id}: {texture.width}x{texture.height}");
+                            assetComponent.SetAsset(texture);
+                        }
+                        else
+                        {
+                            Debug.LogError($"[UIKit] Failed to load asset for {componentData.Id}: {error}");
+                        }
+                    });
+                }
+                else if (!string.IsNullOrEmpty(componentData.AssetUrl))
+                {
+                    Debug.LogWarning($"[UIKit] Component {componentData.Id} has AssetUrl but does not implement IAssetComponent");
+                }
+            }
+            
+            // Process children recursively
+            if (componentData.Children != null)
+            {
+                foreach (var childComponentData in componentData.Children)
+                {
+                    ProcessComponentAssets(childComponentData, assetLoader);
+                }
+            }
         }
         
         /// <summary>

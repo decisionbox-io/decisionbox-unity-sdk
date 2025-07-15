@@ -32,9 +32,12 @@ namespace DecisionBox.UIKit.Core
         /// <param name="onProgress">Optional callback for progress updates</param>
         public void LoadTexture(string url, Action<Texture2D, string> onComplete, Action<float> onProgress = null)
         {
+            Debug.Log($"[UIKit AssetLoader] LoadTexture called for URL: {url}");
+            
             // Check memory cache first
             if (_memoryCache.TryGetValue(url, out var cachedTexture))
             {
+                Debug.Log($"[UIKit AssetLoader] Found texture in memory cache: {url}");
                 onComplete?.Invoke(cachedTexture, null);
                 return;
             }
@@ -43,10 +46,13 @@ namespace DecisionBox.UIKit.Core
             var cache = UIKitManager.Instance.AssetCache;
             if (cache.TryGetCachedTexture(url, out var texture))
             {
+                Debug.Log($"[UIKit AssetLoader] Found texture in disk cache: {url}");
                 _memoryCache[url] = texture;
                 onComplete?.Invoke(texture, null);
                 return;
             }
+            
+            Debug.Log($"[UIKit AssetLoader] Adding to load queue: {url}");
             
             // Add to load queue
             var request = new AssetLoadRequest
@@ -144,11 +150,14 @@ namespace DecisionBox.UIKit.Core
         
         private void ProcessLoadQueue()
         {
+            Debug.Log($"[UIKit AssetLoader] ProcessLoadQueue: Queue={_loadQueue.Count}, CurrentLoads={_currentLoadCount}, MaxLoads={_maxConcurrentLoads}");
+            
             while (_loadQueue.Count > 0 && _currentLoadCount < _maxConcurrentLoads)
             {
                 var request = _loadQueue.Dequeue();
                 _currentLoadCount++;
                 
+                Debug.Log($"[UIKit AssetLoader] Starting coroutine for: {request.Url}");
                 UIKitManager.Instance.StartCoroutine(LoadTextureCoroutine(request));
             }
         }
@@ -161,6 +170,10 @@ namespace DecisionBox.UIKit.Core
             {
                 webRequest.timeout = 30; // 30 second timeout
                 
+                // Add headers for better compatibility
+                webRequest.SetRequestHeader("User-Agent", "DecisionBox-Unity-SDK/1.0");
+                
+                Debug.Log($"[UIKit AssetLoader] Sending web request to: {request.Url}");
                 var operation = webRequest.SendWebRequest();
                 
                 while (!operation.isDone)
@@ -169,21 +182,54 @@ namespace DecisionBox.UIKit.Core
                     yield return null;
                 }
                 
+                Debug.Log($"[UIKit AssetLoader] Web request completed. Result: {webRequest.result}, Response Code: {webRequest.responseCode}");
+                
                 if (webRequest.result == UnityWebRequest.Result.Success)
                 {
                     var texture = DownloadHandlerTexture.GetContent(webRequest);
-                    Debug.Log($"[UIKit AssetLoader] Successfully downloaded texture: {texture.width}x{texture.height} from {request.Url}");
-                    
-                    // Cache the texture
-                    _memoryCache[request.Url] = texture;
-                    UIKitManager.Instance.AssetCache.CacheTexture(request.Url, texture);
-                    
-                    request.OnComplete?.Invoke(texture, null);
+                    if (texture != null)
+                    {
+                        Debug.Log($"[UIKit AssetLoader] Successfully downloaded texture: {texture.width}x{texture.height} from {request.Url}");
+                        
+                        // Cache the texture
+                        _memoryCache[request.Url] = texture;
+                        UIKitManager.Instance.AssetCache.CacheTexture(request.Url, texture);
+                        
+                        request.OnComplete?.Invoke(texture, null);
+                    }
+                    else
+                    {
+                        Debug.LogError($"[UIKit AssetLoader] Downloaded texture is null from {request.Url}");
+                        
+                        // Log additional debugging info
+                        var data = webRequest.downloadHandler.data;
+                        Debug.LogError($"[UIKit AssetLoader] Downloaded data size: {data?.Length ?? 0} bytes");
+                        if (data != null && data.Length > 0)
+                        {
+                            var dataPreview = System.Text.Encoding.UTF8.GetString(data, 0, Math.Min(200, data.Length));
+                            Debug.LogError($"[UIKit AssetLoader] Data preview: {dataPreview}");
+                        }
+                        
+                        request.OnComplete?.Invoke(null, "Downloaded texture is null - data might not be a valid image");
+                    }
                 }
                 else
                 {
-                    Debug.LogError($"[UIKit AssetLoader] Failed to load texture from {request.Url}: {webRequest.error}");
-                    request.OnComplete?.Invoke(null, webRequest.error);
+                    Debug.LogError($"[UIKit AssetLoader] Failed to load texture from {request.Url}: {webRequest.error}, Response Code: {webRequest.responseCode}");
+                    
+                    // For DataProcessingError, log more details
+                    if (webRequest.result == UnityWebRequest.Result.DataProcessingError)
+                    {
+                        var data = webRequest.downloadHandler.data;
+                        Debug.LogError($"[UIKit AssetLoader] Data processing error - downloaded data size: {data?.Length ?? 0} bytes");
+                        if (data != null && data.Length > 0)
+                        {
+                            var dataPreview = System.Text.Encoding.UTF8.GetString(data, 0, Math.Min(200, data.Length));
+                            Debug.LogError($"[UIKit AssetLoader] Data preview: {dataPreview}");
+                        }
+                    }
+                    
+                    request.OnComplete?.Invoke(null, $"{webRequest.error} (Code: {webRequest.responseCode})");
                 }
             }
             

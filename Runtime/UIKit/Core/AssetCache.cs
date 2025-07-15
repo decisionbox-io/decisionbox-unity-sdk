@@ -95,14 +95,17 @@ namespace DecisionBox.UIKit.Core
         public bool TryGetCachedTexture(string url, out Texture2D texture)
         {
             texture = null;
+            Debug.Log($"[UIKit AssetCache] TryGetCachedTexture called for: {url}");
             
             if (!_cacheIndex.TryGetValue(url, out var entry))
             {
+                Debug.Log($"[UIKit AssetCache] URL not found in cache index: {url}");
                 return false;
             }
             
             if (!File.Exists(entry.FilePath))
             {
+                Debug.Log($"[UIKit AssetCache] Cache file does not exist: {entry.FilePath}");
                 // File was deleted, remove from index
                 _cacheIndex.Remove(url);
                 SaveCacheIndex();

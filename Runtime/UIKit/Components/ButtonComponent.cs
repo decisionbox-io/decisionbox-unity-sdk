@@ -24,6 +24,7 @@ namespace DecisionBox.UIKit.Components
         public ButtonComponent(UIKitComponent componentData, GameObject parent) 
             : base(componentData, parent)
         {
+            Debug.Log($"[UIKit] ButtonComponent created for {componentData.Id} with AssetUrl: {componentData.AssetUrl}");
         }
         
         protected override void Initialize()
@@ -246,7 +247,11 @@ namespace DecisionBox.UIKit.Components
         
         public void SetAsset(Texture2D texture)
         {
-            if (texture == null || _backgroundImage == null) return;
+            if (texture == null || _backgroundImage == null) 
+            {
+                Debug.LogError($"[UIKit] SetAsset failed for button {_componentData.Id}: texture={texture != null}, backgroundImage={_backgroundImage != null}");
+                return;
+            }
             
             _backgroundTexture = texture;
             
@@ -257,6 +262,12 @@ namespace DecisionBox.UIKit.Components
                 new Vector2(0.5f, 0.5f),
                 100.0f // pixels per unit
             );
+            
+            if (sprite == null)
+            {
+                Debug.LogError($"[UIKit] Failed to create sprite for button {_componentData.Id}");
+                return;
+            }
             
             _backgroundImage.sprite = sprite;
             _backgroundImage.type = Image.Type.Simple;
@@ -278,7 +289,10 @@ namespace DecisionBox.UIKit.Components
             colors.fadeDuration = 0.1f;
             _button.colors = colors;
             
-            Debug.Log($"[UIKit] Button {_componentData.Id} background image set: {texture.width}x{texture.height}, sprite: {sprite != null}");
+            Debug.Log($"[UIKit] Button {_componentData.Id} background image set successfully: {texture.width}x{texture.height}, sprite created: {sprite != null}");
+            
+            // Force a refresh of the UI
+            _backgroundImage.SetNativeSize();
         }
         
         public Texture2D GetAsset()
