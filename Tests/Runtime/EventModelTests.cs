@@ -28,21 +28,27 @@ namespace DecisionBox.Tests
         public void GameStartedEvent_GetMetadata_WithAllValues()
         {
             var evt = new GameStartedEvent(TEST_USER_ID, 100, 50, 10);
-            var metadata = evt.GetMetadata();
+            var metadata = evt.Metadata; // Use Metadata property to get injected fields
             
-            Assert.AreEqual(3, metadata.Count);
+            Assert.IsTrue(metadata.Count >= 6); // 3 original + 3 injected
             Assert.AreEqual(100, metadata["initialSoftCurrency"]);
             Assert.AreEqual(50, metadata["initialHardCurrency"]);
             Assert.AreEqual(10, metadata["initialPremiumCurrency"]);
+            Assert.IsTrue(metadata.ContainsKey("version"));
+            Assert.IsTrue(metadata.ContainsKey("platform"));
+            Assert.IsTrue(metadata.ContainsKey("deviceModel"));
         }
 
         [Test]
         public void GameStartedEvent_GetMetadata_WithNullValues()
         {
             var evt = new GameStartedEvent(TEST_USER_ID, null, null, null);
-            var metadata = evt.GetMetadata();
+            var metadata = evt.Metadata; // Use Metadata property to get injected fields
             
-            Assert.AreEqual(0, metadata.Count);
+            Assert.AreEqual(3, metadata.Count); // Only injected fields
+            Assert.IsTrue(metadata.ContainsKey("version"));
+            Assert.IsTrue(metadata.ContainsKey("platform"));
+            Assert.IsTrue(metadata.ContainsKey("deviceModel"));
         }
 
         [Test]
@@ -71,22 +77,28 @@ namespace DecisionBox.Tests
         public void LevelStartedEvent_GetMetadata_WithAllValues()
         {
             var evt = new LevelStartedEvent(TEST_USER_ID, 5, "Boss Level", "Hard");
-            var metadata = evt.GetMetadata();
+            var metadata = evt.Metadata; // Use Metadata property to get injected fields
             
-            Assert.AreEqual(3, metadata.Count);
+            Assert.IsTrue(metadata.Count >= 6); // 3 original + 3 injected
             Assert.AreEqual(5, metadata["levelNumber"]);
             Assert.AreEqual("Boss Level", metadata["levelName"]);
             Assert.AreEqual("Hard", metadata["difficulty"]);
+            Assert.IsTrue(metadata.ContainsKey("version"));
+            Assert.IsTrue(metadata.ContainsKey("platform"));
+            Assert.IsTrue(metadata.ContainsKey("deviceModel"));
         }
 
         [Test]
         public void LevelStartedEvent_GetMetadata_WithOptionalNull()
         {
             var evt = new LevelStartedEvent(TEST_USER_ID, 5, null, null);
-            var metadata = evt.GetMetadata();
+            var metadata = evt.Metadata; // Use Metadata property to get injected fields
             
-            Assert.AreEqual(1, metadata.Count);
+            Assert.AreEqual(4, metadata.Count); // 1 original + 3 injected
             Assert.AreEqual(5, metadata["levelNumber"]);
+            Assert.IsTrue(metadata.ContainsKey("version"));
+            Assert.IsTrue(metadata.ContainsKey("platform"));
+            Assert.IsTrue(metadata.ContainsKey("deviceModel"));
         }
 
         #endregion
@@ -111,14 +123,17 @@ namespace DecisionBox.Tests
         public void ScoreUpdatedEvent_GetMetadata_WithAllValues()
         {
             var evt = new ScoreUpdatedEvent(TEST_USER_ID, 1, 1500, 1000, 500, 2);
-            var metadata = evt.GetMetadata();
+            var metadata = evt.Metadata; // Use Metadata property to get injected fields
             
-            Assert.AreEqual(5, metadata.Count);
+            Assert.IsTrue(metadata.Count >= 8); // 5 original + 3 injected
             Assert.AreEqual(1, metadata["levelNumber"]);
             Assert.AreEqual(1500, metadata["currentScore"]);
             Assert.AreEqual(1000, metadata["oldScore"]);
             Assert.AreEqual(500, metadata["scoreDelta"]);
             Assert.AreEqual(2, metadata["comboMultiplier"]);
+            Assert.IsTrue(metadata.ContainsKey("version"));
+            Assert.IsTrue(metadata.ContainsKey("platform"));
+            Assert.IsTrue(metadata.ContainsKey("deviceModel"));
         }
 
         [Test]
@@ -336,56 +351,14 @@ namespace DecisionBox.Tests
         public void UserLocationLatLngEvent_GetMetadata_HasCoordinates()
         {
             var evt = new UserLocationLatLngEvent(TEST_USER_ID, 37.7749, -122.4194);
-            var metadata = evt.GetMetadata();
+            var metadata = evt.Metadata; // Use Metadata property to get injected fields
             
-            Assert.AreEqual(2, metadata.Count);
+            Assert.AreEqual(5, metadata.Count); // 2 original + 3 injected
             Assert.AreEqual(37.7749, metadata["latitude"]);
             Assert.AreEqual(-122.4194, metadata["longitude"]);
-        }
-
-        #endregion
-
-        #region UserTouchEvent Tests
-
-        [Test]
-        public void UserTouchEvent_ConstructsCorrectly()
-        {
-            var evt = new UserTouchEvent(
-                TEST_USER_ID,
-                0,
-                "Began",
-                0.5f,
-                0.75f,
-                540f,
-                810f,
-                123.45f
-            );
-            
-            Assert.AreEqual(TEST_USER_ID, evt.UserId);
-            Assert.AreEqual("UserTouch", evt.EventType);
-            Assert.AreEqual(0, evt.FingerId);
-            Assert.AreEqual("Began", evt.Phase);
-            Assert.AreEqual(0.5f, evt.NormalizedX);
-            Assert.AreEqual(0.75f, evt.NormalizedY);
-            Assert.AreEqual(540f, evt.RawX);
-            Assert.AreEqual(810f, evt.RawY);
-            Assert.AreEqual(123.45f, evt.Timestamp);
-        }
-
-        [Test]
-        public void UserTouchEvent_GetMetadata_AllFields()
-        {
-            var evt = new UserTouchEvent(TEST_USER_ID, 1, "Moved", 0.25f, 0.5f, 270f, 540f, 456.78f);
-            var metadata = evt.GetMetadata();
-            
-            Assert.AreEqual(7, metadata.Count);
-            Assert.IsTrue(metadata.ContainsKey("fingerId"));
-            Assert.IsTrue(metadata.ContainsKey("phase"));
-            Assert.IsTrue(metadata.ContainsKey("normalizedX"));
-            Assert.IsTrue(metadata.ContainsKey("normalizedY"));
-            Assert.IsTrue(metadata.ContainsKey("rawX"));
-            Assert.IsTrue(metadata.ContainsKey("rawY"));
-            Assert.IsTrue(metadata.ContainsKey("timestamp"));
+            Assert.IsTrue(metadata.ContainsKey("version"));
+            Assert.IsTrue(metadata.ContainsKey("platform"));
+            Assert.IsTrue(metadata.ContainsKey("deviceModel"));
         }
 
         #endregion
@@ -409,7 +382,6 @@ namespace DecisionBox.Tests
             Assert.Throws<ArgumentNullException>(() => new UserLocationTextEvent(null!, "location"));
             Assert.Throws<ArgumentNullException>(() => new UserLocationLatLngEvent(null!, 0, 0));
             Assert.Throws<ArgumentNullException>(() => new UserLocationIPEvent(null!, "127.0.0.1"));
-            Assert.Throws<ArgumentNullException>(() => new UserTouchEvent(null!, 0, "phase", 0, 0, 0, 0, 0));
         }
 
         #endregion

@@ -33,7 +33,21 @@ namespace DecisionBox.Models
         [JsonProperty("metadata")]
         public Dictionary<string, object> Metadata 
         { 
-            get => _metadata ??= GetMetadata();
+            get
+            {
+                if (_metadata == null)
+                {
+                    _metadata = GetMetadata();
+                    // Ensure all events include version, platform, and deviceModel
+                    if (!_metadata.ContainsKey("version"))
+                        _metadata["version"] = Application.version;
+                    if (!_metadata.ContainsKey("platform"))
+                        _metadata["platform"] = DecisionBoxSDK.Instance.GetPlatformType().ToString();
+                    if (!_metadata.ContainsKey("deviceModel"))
+                        _metadata["deviceModel"] = SystemInfo.deviceModel;
+                }
+                return _metadata;
+            }
             set => _metadata = value;
         }
 

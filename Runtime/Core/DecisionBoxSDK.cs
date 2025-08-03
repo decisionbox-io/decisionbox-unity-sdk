@@ -794,7 +794,7 @@ namespace DecisionBox.Core
             return await SendEventAsync(eventData);
         }
 
-        private PlatformType GetPlatformType()
+        public PlatformType GetPlatformType()
         {
             switch (Application.platform)
             {
