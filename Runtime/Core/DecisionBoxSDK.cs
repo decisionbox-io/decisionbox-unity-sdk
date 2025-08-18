@@ -42,6 +42,7 @@ namespace DecisionBox.Core
         private long tokenExpiry = 0;
         private RemoteConfig? remoteConfig;
         private WebSocket? websocket;
+        private bool websocketAuthenticated = false;
         private Dictionary<string, List<Action<string>>> websocketHandlers = new();
         private Queue<EventData> pendingEvents = new();
         private long sessionStartTime = 0;
@@ -820,7 +821,8 @@ namespace DecisionBox.Core
 
                 websocket.OnOpen += () =>
                 {
-                    SDKLog("WebSocket connected");
+                    SDKLog("WebSocket connected, sending authentication");
+                    websocketAuthenticated = false;
                     // Send auth message
                     var authMessage = new
                     {
@@ -860,11 +862,23 @@ namespace DecisionBox.Core
             try
             {
                 var wsMessage = JsonConvert.DeserializeObject<WebSocketMessage>(message);
-                if (wsMessage?.type != null && websocketHandlers.ContainsKey(wsMessage.type))
+                if (wsMessage?.type != null)
                 {
-                    foreach (var handler in websocketHandlers[wsMessage.type])
+                    // Handle authentication success
+                    if (wsMessage.type == "auth_success")
                     {
-                        handler(message);
+                        websocketAuthenticated = true;
+                        SDKLog("WebSocket authentication confirmed by server");
+                        return;
+                    }
+                    
+                    // Handle other message types only if authenticated
+                    if (websocketAuthenticated && websocketHandlers.ContainsKey(wsMessage.type))
+                    {
+                        foreach (var handler in websocketHandlers[wsMessage.type])
+                        {
+                            handler(message);
+                        }
                     }
                 }
             }
@@ -880,6 +894,7 @@ namespace DecisionBox.Core
             {
                 _ = websocket.Close();
                 websocket = null;
+                websocketAuthenticated = false;
             }
         }
 
