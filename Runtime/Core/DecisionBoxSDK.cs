@@ -873,9 +873,9 @@ namespace DecisionBox.Core
                     }
                     
                     // Handle other message types only if authenticated
-                    if (websocketAuthenticated && websocketHandlers.ContainsKey(wsMessage.action))
+                    if (websocketAuthenticated && websocketHandlers.ContainsKey(wsMessage.Action))
                     {
-                        foreach (var handler in websocketHandlers[wsMessage.action])
+                        foreach (var handler in websocketHandlers[wsMessage.Action])
                         {
                             handler(message);
                         }
