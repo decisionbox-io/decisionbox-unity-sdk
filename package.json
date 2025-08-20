@@ -1,6 +1,6 @@
 {
   "name": "io.decisionbox.sdk",
-  "version": "1.0.5",
+  "version": "1.0.7",
   "displayName": "DecisionBox Unity SDK",
   "description": "Advanced analytics and real-time insights for Unity games. Track player behavior, game events, and performance metrics with ease.",
   "unity": "2020.3",

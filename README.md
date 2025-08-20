@@ -107,6 +107,12 @@ await DecisionBoxSDK.Instance.SendLevelFailedAsync(
     failureReason: FailureReason.TimeOut  // Enum, not string!
 );
 
+await DecisionBoxSDK.Instance.SendLevelRestartedAsync(
+    levelNumber: 1,
+    restartReason: RestartReason.AfterFailure,  // Why player restarted
+    attemptNumber: 2  // Optional: which attempt this is
+);
+
 // Currency events with strongly-typed enums
 await DecisionBoxSDK.Instance.SendCurrencyBalanceUpdatedAsync(
     currencyType: CurrencyType.Soft,     // Enum
@@ -122,6 +128,15 @@ await DecisionBoxSDK.Instance.SendBoosterOfferedAsync(
     boosterType: BoosterType.SpeedBoost,  // Enum
     offerMethod: OfferMethod.WatchAd,     // Enum
     requiredCurrency: 0
+);
+
+// Track when player uses a booster from inventory
+await DecisionBoxSDK.Instance.SendBoosterUsedAsync(
+    levelNumber: 1,
+    boosterType: BoosterType.SpeedBoost,
+    source: BoosterSource.Inventory,  // Where it was activated from
+    quantity: 1,
+    remainingCount: 3  // Optional: boosters left in inventory
 );
 
 // Metrics
@@ -143,12 +158,14 @@ All events are strongly-typed methods on the SDK:
 - `SendLevelStartedAsync` - Level began
 - `SendLevelSuccessAsync` - Level completed successfully
 - `SendLevelFailedAsync` - Level failed
+- `SendLevelRestartedAsync` - Level restarted
 - `SendScoreUpdatedAsync` - Score changed
 - `SendPowerUpCollectedAsync` - Power-up collected
 - `SendCurrencyBalanceUpdatedAsync` - Currency balance changed
 - `SendBoosterOfferedAsync` - Booster offered to player
 - `SendBoosterAcceptedAsync` - Booster accepted
 - `SendBoosterDeclinedAsync` - Booster declined
+- `SendBoosterUsedAsync` - Booster used from inventory
 - `SendMetricRecordedAsync` - Custom metric recorded
 - `SendUserLocationTextAsync` - Text location
 - `SendUserLocationLatLngAsync` - GPS coordinates
@@ -171,16 +188,31 @@ FailureReason.NoLives
 FailureReason.NotEnoughMoves
 // ... and more
 
+// Restart reasons
+RestartReason.PlayerChoice
+RestartReason.AfterFailure
+RestartReason.Practice
+RestartReason.Achievement
+// ... and more
+
 // Booster types
 BoosterType.SpeedBoost
 BoosterType.Shield
 BoosterType.ExtraLife
 // ... and more
 
+// Booster sources (where activated from)
+BoosterSource.Inventory
+BoosterSource.PreGame
+BoosterSource.InGame
+BoosterSource.Store
+// ... and more
+
 // Metrics
 MetricType.Score
 MetricType.LivesRemaining
 MetricType.EnemiesDefeated
+MetricType.TotalClicks
 // ... and more
 ```
 

@@ -545,6 +545,39 @@ namespace DecisionBox.Models
     }
 
     /// <summary>
+    /// Level restarted event
+    /// </summary>
+    public class LevelRestartedEvent : EventData
+    {
+        public override string EventType => "LevelRestarted";
+        [JsonIgnore]
+        public int LevelNumber { get; }
+        [JsonIgnore]
+        public int? AttemptNumber { get; }
+        [JsonIgnore]
+        public RestartReason RestartReason { get; }
+
+        public LevelRestartedEvent(string userId, int levelNumber, RestartReason restartReason = RestartReason.PlayerChoice, int? attemptNumber = null)
+            : base(userId, DecisionBoxSDK.Instance.CurrentSessionId, DecisionBoxSDK.Instance.GetAppID())
+        {
+            LevelNumber = levelNumber;
+            AttemptNumber = attemptNumber;
+            RestartReason = restartReason;
+        }
+
+        public override Dictionary<string, object> GetMetadata()
+        {
+            var metadata = new Dictionary<string, object>
+            {
+                ["levelNumber"] = LevelNumber,
+                ["restartReason"] = RestartReason.ToString()
+            };
+            if (AttemptNumber.HasValue) metadata["attemptNumber"] = AttemptNumber.Value;
+            return metadata;
+        }
+    }
+
+    /// <summary>
     /// Game ended event
     /// </summary>
     public class GameEndedEvent : EventData

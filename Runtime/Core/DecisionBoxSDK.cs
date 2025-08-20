@@ -263,6 +263,22 @@ namespace DecisionBox.Core
         }
 
         /// <summary>
+        /// Send LevelRestarted event
+        /// </summary>
+        public async Task<bool> SendLevelRestartedAsync(string? userId = null, int levelNumber = 0, RestartReason restartReason = RestartReason.PlayerChoice, int? attemptNumber = null)
+        {
+            if (!ValidateSDKState()) return false;
+
+            var eventData = new LevelRestartedEvent(
+                userId ?? currentUserId!,
+                levelNumber,
+                restartReason,
+                attemptNumber
+            );
+            return await SendEventAsync(eventData);
+        }
+
+        /// <summary>
         /// Send CurrencyBalanceUpdated event
         /// </summary>
         public async Task<bool> SendCurrencyBalanceUpdatedAsync(string? userId = null, CurrencyType currencyType = CurrencyType.Soft, int? oldBalance = null, int currentBalance = 0, int? delta = null, CurrencyUpdateReason updateReason = CurrencyUpdateReason.NotSpecified)

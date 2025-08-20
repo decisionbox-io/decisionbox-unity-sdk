@@ -194,6 +194,31 @@ namespace DecisionBox.Models
     }
 
     /// <summary>
+    /// Reasons for restarting a level
+    /// </summary>
+    public enum RestartReason
+    {
+        PlayerChoice,
+        AfterFailure,
+        Tutorial,
+        Practice,
+        Challenge,
+        Improvement,
+        MissedObjective,
+        WrongStrategy,
+        Accident,
+        Retry,
+        PowerUpTest,
+        Achievement,
+        Leaderboard,
+        PerfectScore,
+        BetterReward,
+        UnlockContent,
+        DailyChallenge,
+        EventRequirement
+    }
+
+    /// <summary>
     /// Reasons for level or game failure
     /// </summary>
     public enum FailureReason
@@ -265,7 +290,8 @@ namespace DecisionBox.Models
         ExplorationPoints,
         BonusPoints,
         TargetScore,
-        StarsAwarded
+        StarsAwarded,
+        TotalClicks
     }
 
     /// <summary>
