@@ -331,6 +331,24 @@ namespace DecisionBox.Core
         }
 
         /// <summary>
+        /// Send BoosterUsed event - tracks when a player uses a booster from inventory
+        /// </summary>
+        public async Task<bool> SendBoosterUsedAsync(string? userId = null, int levelNumber = 0, BoosterType boosterType = BoosterType.SpeedBoost, BoosterSource source = BoosterSource.Inventory, int quantity = 1, int? remainingCount = null)
+        {
+            if (!ValidateSDKState()) return false;
+
+            var eventData = new BoosterUsedEvent(
+                userId ?? currentUserId!,
+                levelNumber,
+                boosterType,
+                source,
+                quantity,
+                remainingCount
+            );
+            return await SendEventAsync(eventData);
+        }
+
+        /// <summary>
         /// Send MetricRecorded event
         /// </summary>
         public async Task<bool> SendMetricRecordedAsync(string? userId = null, int levelNumber = 0, MetricType metric = MetricType.Score, float metricValue = 0f)

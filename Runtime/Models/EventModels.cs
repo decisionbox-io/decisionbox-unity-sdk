@@ -377,6 +377,47 @@ namespace DecisionBox.Models
     }
 
     /// <summary>
+    /// Booster used event - tracks when a player uses a booster from inventory
+    /// </summary>
+    public class BoosterUsedEvent : EventData
+    {
+        public override string EventType => "BoosterUsed";
+        [JsonIgnore]
+        public int LevelNumber { get; }
+        [JsonIgnore]
+        public BoosterType BoosterType { get; }
+        [JsonIgnore]
+        public BoosterSource Source { get; }
+        [JsonIgnore]
+        public int Quantity { get; }
+        [JsonIgnore]
+        public int? RemainingCount { get; }
+
+        public BoosterUsedEvent(string userId, int levelNumber, BoosterType boosterType, BoosterSource source = BoosterSource.Inventory, int quantity = 1, int? remainingCount = null)
+            : base(userId, DecisionBoxSDK.Instance.CurrentSessionId, DecisionBoxSDK.Instance.GetAppID())
+        {
+            LevelNumber = levelNumber;
+            BoosterType = boosterType;
+            Source = source;
+            Quantity = quantity;
+            RemainingCount = remainingCount;
+        }
+
+        public override Dictionary<string, object> GetMetadata()
+        {
+            var metadata = new Dictionary<string, object>
+            {
+                ["levelNumber"] = LevelNumber,
+                ["boosterType"] = BoosterType.ToString(),
+                ["source"] = Source.ToString(),
+                ["quantity"] = Quantity
+            };
+            if (RemainingCount.HasValue) metadata["remainingCount"] = RemainingCount.Value;
+            return metadata;
+        }
+    }
+
+    /// <summary>
     /// Action outcome recorded event
     /// </summary>
     public class ActionOutcomeRecordedEvent : EventData

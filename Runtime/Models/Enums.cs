@@ -153,6 +153,28 @@ namespace DecisionBox.Models
     }
 
     /// <summary>
+    /// Source of booster activation
+    /// </summary>
+    public enum BoosterSource
+    {
+        Inventory,
+        PreGame,
+        InGame,
+        Store,
+        Reward,
+        Achievement,
+        LevelStart,
+        PowerUpMenu,
+        QuickAction,
+        AutoActivated,
+        Tutorial,
+        EventReward,
+        SeasonPass,
+        DailyBonus,
+        BattlePass
+    }
+
+    /// <summary>
     /// Reasons for declining offers
     /// </summary>
     public enum DeclineReason
