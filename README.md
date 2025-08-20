@@ -139,11 +139,46 @@ await DecisionBoxSDK.Instance.SendBoosterUsedAsync(
     remainingCount: 3  // Optional: boosters left in inventory
 );
 
+// Track booster inventory changes (similar to currency balance)
+await DecisionBoxSDK.Instance.SendBoosterInventoryUpdatedAsync(
+    boosterType: BoosterType.ExtraLife,
+    oldQuantity: 5,
+    currentQuantity: 8,
+    delta: 3,  // Gained 3 boosters
+    updateReason: BoosterUpdateReason.Reward
+);
+
 // Metrics
 await DecisionBoxSDK.Instance.SendMetricRecordedAsync(
     levelNumber: 1,
     metric: MetricType.Score,  // Enum
     metricValue: 1500f
+);
+
+// Screen navigation tracking
+await DecisionBoxSDK.Instance.SendScreenViewedAsync(
+    screenType: ScreenType.Store,
+    previousScreen: ScreenType.MainMenu,
+    viewDuration: 45.5  // Optional: seconds spent on previous screen
+);
+
+// Track rewarded ads you show manually (not via DecisionBox rules)
+await DecisionBoxSDK.Instance.SendRewardedAdOfferedAsync(
+    offerReason: AdOfferReason.ContinueLevel,
+    placement: AdPlacement.LevelFailed,  // Enum
+    rewardType: AdRewardType.Moves,      // Enum
+    rewardAmount: 5,
+    levelNumber: 10
+);
+
+// Track ad result
+await DecisionBoxSDK.Instance.SendRewardedAdResultAsync(
+    adResult: AdResult.Watched,
+    offerReason: AdOfferReason.ContinueLevel,
+    watchDuration: 30.0,
+    adNetwork: "AdMob",
+    revenue: 0.05,  // Optional: ad revenue
+    levelNumber: 10  // Optional: current level
 );
 ```
 
@@ -166,7 +201,11 @@ All events are strongly-typed methods on the SDK:
 - `SendBoosterAcceptedAsync` - Booster accepted
 - `SendBoosterDeclinedAsync` - Booster declined
 - `SendBoosterUsedAsync` - Booster used from inventory
+- `SendBoosterInventoryUpdatedAsync` - Booster inventory changed
 - `SendMetricRecordedAsync` - Custom metric recorded
+- `SendScreenViewedAsync` - Screen/view navigation
+- `SendRewardedAdOfferedAsync` - Rewarded ad offered to player
+- `SendRewardedAdResultAsync` - Rewarded ad outcome
 - `SendUserLocationTextAsync` - Text location
 - `SendUserLocationLatLngAsync` - GPS coordinates
 - `SendUserLocationIPAsync` - IP address location
@@ -214,6 +253,14 @@ MetricType.LivesRemaining
 MetricType.EnemiesDefeated
 MetricType.TotalClicks
 // ... and more
+
+// Screen types
+ScreenType.MainMenu
+ScreenType.GamePlay
+ScreenType.Store
+ScreenType.Settings
+ScreenType.Leaderboard
+// ... 100+ screen types
 ```
 
 ## 📱 Push Notifications

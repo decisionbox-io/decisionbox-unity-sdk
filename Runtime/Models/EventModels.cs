@@ -418,6 +418,47 @@ namespace DecisionBox.Models
     }
 
     /// <summary>
+    /// Booster inventory updated event - tracks changes in booster inventory
+    /// </summary>
+    public class BoosterInventoryUpdatedEvent : EventData
+    {
+        public override string EventType => "BoosterInventoryUpdated";
+        [JsonIgnore]
+        public BoosterType BoosterType { get; }
+        [JsonIgnore]
+        public int? OldQuantity { get; }
+        [JsonIgnore]
+        public int CurrentQuantity { get; }
+        [JsonIgnore]
+        public int? Delta { get; }
+        [JsonIgnore]
+        public BoosterUpdateReason UpdateReason { get; }
+
+        public BoosterInventoryUpdatedEvent(string userId, BoosterType boosterType, int? oldQuantity, int currentQuantity, int? delta, BoosterUpdateReason updateReason)
+            : base(userId, DecisionBoxSDK.Instance.CurrentSessionId, DecisionBoxSDK.Instance.GetAppID())
+        {
+            BoosterType = boosterType;
+            OldQuantity = oldQuantity;
+            CurrentQuantity = currentQuantity;
+            Delta = delta;
+            UpdateReason = updateReason;
+        }
+
+        public override Dictionary<string, object> GetMetadata()
+        {
+            var metadata = new Dictionary<string, object>
+            {
+                ["boosterType"] = BoosterType.ToString(),
+                ["currentQuantity"] = CurrentQuantity,
+                ["updateReason"] = UpdateReason.ToString()
+            };
+            if (OldQuantity.HasValue) metadata["oldQuantity"] = OldQuantity.Value;
+            if (Delta.HasValue) metadata["delta"] = Delta.Value;
+            return metadata;
+        }
+    }
+
+    /// <summary>
     /// Action outcome recorded event
     /// </summary>
     public class ActionOutcomeRecordedEvent : EventData
@@ -731,6 +772,125 @@ namespace DecisionBox.Models
             {
                 ["reason"] = Reason
             };
+        }
+    }
+
+    /// <summary>
+    /// Screen viewed event - tracks screen/view navigation
+    /// </summary>
+    public class ScreenViewedEvent : EventData
+    {
+        public override string EventType => "ScreenViewed";
+        [JsonIgnore]
+        public ScreenType ScreenType { get; }
+        [JsonIgnore]
+        public ScreenType? PreviousScreen { get; }
+        [JsonIgnore]
+        public double? ViewDuration { get; }
+
+        public ScreenViewedEvent(string userId, ScreenType screenType, ScreenType? previousScreen = null, double? viewDuration = null)
+            : base(userId, DecisionBoxSDK.Instance.CurrentSessionId, DecisionBoxSDK.Instance.GetAppID())
+        {
+            ScreenType = screenType;
+            PreviousScreen = previousScreen;
+            ViewDuration = viewDuration;
+        }
+
+        public override Dictionary<string, object> GetMetadata()
+        {
+            var metadata = new Dictionary<string, object>
+            {
+                ["screenType"] = ScreenType.ToString()
+            };
+            if (PreviousScreen.HasValue) metadata["previousScreen"] = PreviousScreen.Value.ToString();
+            if (ViewDuration.HasValue) metadata["viewDuration"] = ViewDuration.Value;
+            return metadata;
+        }
+    }
+
+    /// <summary>
+    /// Rewarded ad offered event - tracks when game offers a rewarded ad
+    /// </summary>
+    public class RewardedAdOfferedEvent : EventData
+    {
+        public override string EventType => "RewardedAdOffered";
+        [JsonIgnore]
+        public AdOfferReason OfferReason { get; }
+        [JsonIgnore]
+        public AdPlacement Placement { get; }
+        [JsonIgnore]
+        public AdRewardType RewardType { get; }
+        [JsonIgnore]
+        public int? RewardAmount { get; }
+        [JsonIgnore]
+        public int? LevelNumber { get; }
+
+        public RewardedAdOfferedEvent(string userId, AdOfferReason offerReason, AdPlacement placement = AdPlacement.Other, AdRewardType rewardType = AdRewardType.Other, int? rewardAmount = null, int? levelNumber = null)
+            : base(userId, DecisionBoxSDK.Instance.CurrentSessionId, DecisionBoxSDK.Instance.GetAppID())
+        {
+            OfferReason = offerReason;
+            Placement = placement;
+            RewardType = rewardType;
+            RewardAmount = rewardAmount;
+            LevelNumber = levelNumber;
+        }
+
+        public override Dictionary<string, object> GetMetadata()
+        {
+            var metadata = new Dictionary<string, object>
+            {
+                ["offerReason"] = OfferReason.ToString(),
+                ["placement"] = Placement.ToString(),
+                ["rewardType"] = RewardType.ToString()
+            };
+            if (RewardAmount.HasValue) metadata["rewardAmount"] = RewardAmount.Value;
+            if (LevelNumber.HasValue) metadata["levelNumber"] = LevelNumber.Value;
+            return metadata;
+        }
+    }
+
+    /// <summary>
+    /// Rewarded ad result event - tracks the outcome of a rewarded ad
+    /// </summary>
+    public class RewardedAdResultEvent : EventData
+    {
+        public override string EventType => "RewardedAdResult";
+        [JsonIgnore]
+        public AdResult AdResult { get; }
+        [JsonIgnore]
+        public AdOfferReason OfferReason { get; }
+        [JsonIgnore]
+        public double? WatchDuration { get; }
+        [JsonIgnore]
+        public string? AdNetwork { get; }
+        [JsonIgnore]
+        public double? Revenue { get; }
+        [JsonIgnore]
+        public int? LevelNumber { get; }
+
+        public RewardedAdResultEvent(string userId, AdResult adResult, AdOfferReason offerReason, double? watchDuration = null, string? adNetwork = null, double? revenue = null, int? levelNumber = null)
+            : base(userId, DecisionBoxSDK.Instance.CurrentSessionId, DecisionBoxSDK.Instance.GetAppID())
+        {
+            AdResult = adResult;
+            OfferReason = offerReason;
+            WatchDuration = watchDuration;
+            AdNetwork = adNetwork;
+            Revenue = revenue;
+            LevelNumber = levelNumber;
+        }
+
+        public override Dictionary<string, object> GetMetadata()
+        {
+            var metadata = new Dictionary<string, object>
+            {
+                ["adResult"] = AdResult.ToString(),
+                ["offerReason"] = OfferReason.ToString()
+            };
+            if (WatchDuration.HasValue) metadata["watchDuration"] = WatchDuration.Value;
+            if (!string.IsNullOrEmpty(AdNetwork)) metadata["adNetwork"] = AdNetwork;
+            if (Revenue.HasValue) metadata["revenue"] = Revenue.Value;
+            if (LevelNumber.HasValue) metadata["levelNumber"] = LevelNumber.Value;
+            return metadata;
         }
     }
 

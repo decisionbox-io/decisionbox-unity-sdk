@@ -31,6 +31,28 @@ namespace DecisionBox.Models
     }
 
     /// <summary>
+    /// Reasons for booster inventory changes
+    /// </summary>
+    public enum BoosterUpdateReason
+    {
+        NotSpecified,
+        Purchase,
+        Reward,
+        Used,
+        Expired,
+        Refund,
+        Achievement,
+        DailyLogin,
+        AdReward,
+        EventReward,
+        LevelCompletion,
+        Gift,
+        SeasonPass,
+        Tutorial,
+        SystemAdjustment
+    }
+
+    /// <summary>
     /// Types of boosters available in the game
     /// </summary>
     public enum BoosterType
@@ -88,7 +110,8 @@ namespace DecisionBox.Models
         LightBoost,
         DarkBoost,
         ComboEnhancer,
-        ScoreEnhancer
+        ScoreEnhancer,
+        Hint
     }
 
     /// <summary>
@@ -292,6 +315,241 @@ namespace DecisionBox.Models
         TargetScore,
         StarsAwarded,
         TotalClicks
+    }
+
+    /// <summary>
+    /// Placement locations for ads
+    /// </summary>
+    public enum AdPlacement
+    {
+        LevelStart,
+        LevelEnd,
+        LevelFailed,
+        LevelSuccess,
+        MainMenu,
+        PauseMenu,
+        Store,
+        Settings,
+        GameOver,
+        Checkpoint,
+        BetweenLevels,
+        Tutorial,
+        Achievement,
+        DailyReward,
+        Loading,
+        Inventory,
+        Leaderboard,
+        BeforeMatch,
+        AfterMatch,
+        MidLevel,
+        BossDefeat,
+        QuestComplete,
+        Other
+    }
+
+    /// <summary>
+    /// Types of rewards from ads
+    /// </summary>
+    public enum AdRewardType
+    {
+        Coins,
+        Gems,
+        Lives,
+        Moves,
+        Time,
+        Booster,
+        PowerUp,
+        Character,
+        Skin,
+        Item,
+        Energy,
+        Hint,
+        Skip,
+        Continue,
+        Checkpoint,
+        Multiplier,
+        Shield,
+        Revive,
+        Unlock,
+        Experience,
+        Token,
+        Ticket,
+        Key,
+        Chest,
+        RandomReward,
+        Other
+    }
+
+    /// <summary>
+    /// Reasons for offering rewarded ads
+    /// </summary>
+    public enum AdOfferReason
+    {
+        ContinueLevel,
+        ExtraLife,
+        ExtraMoves,
+        SkipLevel,
+        UnlockContent,
+        DoubleReward,
+        FreeBooster,
+        FreeCurrency,
+        FreeItem,
+        ReviveCharacter,
+        RefillEnergy,
+        SpeedUpTimer,
+        UnlockCharacter,
+        BonusReward,
+        DailyReward,
+        WheelSpin,
+        MysteryBox,
+        RemoveAds,
+        ExtraAttempt,
+        HintReveal,
+        PowerUpActivation,
+        CheckpointSave,
+        ScoreMultiplier,
+        Other
+    }
+
+    /// <summary>
+    /// Results of rewarded ad offers
+    /// </summary>
+    public enum AdResult
+    {
+        Watched,
+        Skipped,
+        Failed,
+        NotAvailable,
+        Cancelled,
+        NetworkError,
+        Timeout
+    }
+
+    /// <summary>
+    /// Screen types in the game
+    /// </summary>
+    public enum ScreenType
+    {
+        // Main Screens
+        MainMenu,
+        SplashScreen,
+        LoadingScreen,
+        HomeScreen,
+        
+        // Game Screens
+        GamePlay,
+        LevelSelect,
+        WorldMap,
+        Campaign,
+        Tutorial,
+        Practice,
+        
+        // Menu Screens
+        Settings,
+        Options,
+        AudioSettings,
+        VideoSettings,
+        ControlSettings,
+        LanguageSettings,
+        
+        // Store/Shop Screens
+        Store,
+        ItemShop,
+        BoosterShop,
+        CurrencyShop,
+        BundleShop,
+        SpecialOffers,
+        SeasonPass,
+        BattlePass,
+        
+        // Player Screens
+        Profile,
+        PlayerStats,
+        Inventory,
+        Collection,
+        Achievements,
+        Leaderboard,
+        Friends,
+        Guild,
+        Clan,
+        Team,
+        
+        // Progress Screens
+        LevelComplete,
+        LevelFailed,
+        GameOver,
+        Victory,
+        Defeat,
+        Results,
+        Rewards,
+        
+        // Social Screens
+        Chat,
+        Messages,
+        Notifications,
+        FriendsList,
+        Social,
+        Multiplayer,
+        Matchmaking,
+        Lobby,
+        
+        // Economy Screens
+        Bank,
+        Wallet,
+        Exchange,
+        Trading,
+        Auction,
+        
+        // Customization Screens
+        Character,
+        Avatar,
+        Skins,
+        Cosmetics,
+        Loadout,
+        Deck,
+        Equipment,
+        Upgrades,
+        
+        // Information Screens
+        Help,
+        FAQ,
+        Support,
+        About,
+        Credits,
+        PrivacyPolicy,
+        TermsOfService,
+        ReleaseNotes,
+        News,
+        
+        // Event Screens
+        Events,
+        DailyChallenge,
+        WeeklyChallenge,
+        Tournament,
+        Competition,
+        SpecialEvent,
+        LiveEvent,
+        
+        // Popup/Modal Screens
+        Popup,
+        Dialog,
+        Confirmation,
+        Warning,
+        Error,
+        RateApp,
+        CrossPromotion,
+        AdReward,
+        
+        // Other Screens
+        Login,
+        Registration,
+        AccountRecovery,
+        Onboarding,
+        FirstTimeUser,
+        WelcomeBack,
+        WhatsNew,
+        Maintenance,
+        Unknown
     }
 
     /// <summary>

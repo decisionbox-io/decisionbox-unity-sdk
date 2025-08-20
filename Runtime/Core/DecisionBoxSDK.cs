@@ -365,6 +365,24 @@ namespace DecisionBox.Core
         }
 
         /// <summary>
+        /// Send BoosterInventoryUpdated event - tracks changes in booster inventory
+        /// </summary>
+        public async Task<bool> SendBoosterInventoryUpdatedAsync(string? userId = null, BoosterType boosterType = BoosterType.SpeedBoost, int? oldQuantity = null, int currentQuantity = 0, int? delta = null, BoosterUpdateReason updateReason = BoosterUpdateReason.NotSpecified)
+        {
+            if (!ValidateSDKState()) return false;
+
+            var eventData = new BoosterInventoryUpdatedEvent(
+                userId ?? currentUserId!,
+                boosterType,
+                oldQuantity,
+                currentQuantity,
+                delta,
+                updateReason
+            );
+            return await SendEventAsync(eventData);
+        }
+
+        /// <summary>
         /// Send MetricRecorded event
         /// </summary>
         public async Task<bool> SendMetricRecordedAsync(string? userId = null, int levelNumber = 0, MetricType metric = MetricType.Score, float metricValue = 0f)
@@ -376,6 +394,59 @@ namespace DecisionBox.Core
                 levelNumber,
                 metric,
                 metricValue
+            );
+            return await SendEventAsync(eventData);
+        }
+
+        /// <summary>
+        /// Send ScreenViewed event - tracks screen/view navigation
+        /// </summary>
+        public async Task<bool> SendScreenViewedAsync(string? userId = null, ScreenType screenType = ScreenType.Unknown, ScreenType? previousScreen = null, double? viewDuration = null)
+        {
+            if (!ValidateSDKState()) return false;
+
+            var eventData = new ScreenViewedEvent(
+                userId ?? currentUserId!,
+                screenType,
+                previousScreen,
+                viewDuration
+            );
+            return await SendEventAsync(eventData);
+        }
+
+        /// <summary>
+        /// Send RewardedAdOffered event - tracks when a rewarded ad is offered to the player
+        /// </summary>
+        public async Task<bool> SendRewardedAdOfferedAsync(string? userId = null, AdOfferReason offerReason = AdOfferReason.Other, AdPlacement placement = AdPlacement.Other, AdRewardType rewardType = AdRewardType.Other, int? rewardAmount = null, int? levelNumber = null)
+        {
+            if (!ValidateSDKState()) return false;
+
+            var eventData = new RewardedAdOfferedEvent(
+                userId ?? currentUserId!,
+                offerReason,
+                placement,
+                rewardType,
+                rewardAmount,
+                levelNumber
+            );
+            return await SendEventAsync(eventData);
+        }
+
+        /// <summary>
+        /// Send RewardedAdResult event - tracks the outcome of a rewarded ad
+        /// </summary>
+        public async Task<bool> SendRewardedAdResultAsync(string? userId = null, AdResult adResult = AdResult.Watched, AdOfferReason offerReason = AdOfferReason.Other, double? watchDuration = null, string? adNetwork = null, double? revenue = null, int? levelNumber = null)
+        {
+            if (!ValidateSDKState()) return false;
+
+            var eventData = new RewardedAdResultEvent(
+                userId ?? currentUserId!,
+                adResult,
+                offerReason,
+                watchDuration,
+                adNetwork,
+                revenue,
+                levelNumber
             );
             return await SendEventAsync(eventData);
         }
