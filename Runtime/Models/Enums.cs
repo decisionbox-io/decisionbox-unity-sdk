@@ -235,6 +235,8 @@ namespace DecisionBox.Models
         ReferralInvitesSent,
         ReferralInvitesAccepted,
         EnergyConsumed,
+        EnergyRemaining,
+        EnergyRestored,
         HealthRestored,
         SkillUses,
         ResourcesGathered,
