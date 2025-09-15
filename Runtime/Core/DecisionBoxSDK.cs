@@ -49,6 +49,38 @@ namespace DecisionBox.Core
         private long backgroundStartTime = 0;
         private bool hasSentSessionEndEvent = false;
 
+        // Connection State Management
+        public enum ConnectionState
+        {
+            Disconnected,
+            Initializing,
+            Connecting,
+            Connected,
+            Authenticating,
+            Authenticated,
+            Reconnecting,
+            Failed
+        }
+
+        // Connection Events
+        public delegate void OnConnectionStateChanged(ConnectionState previousState, ConnectionState newState, string? message);
+        public event OnConnectionStateChanged? ConnectionStateChanged;
+        
+        public delegate void OnSDKReady(string sessionId, string? userId);
+        public event OnSDKReady? SDKReady;
+        
+        public delegate void OnConnectionError(string error, ConnectionState state);
+        public event OnConnectionError? ConnectionError;
+
+        private ConnectionState currentConnectionState = ConnectionState.Disconnected;
+        
+        // Public Properties
+        public bool IsInitialized => sdkActive;
+        public bool IsWebSocketConnected => websocket != null && websocket.State == WebSocketState.Open;
+        public bool IsWebSocketAuthenticated => websocketAuthenticated;
+        public bool IsReady => IsInitialized && IsWebSocketConnected && IsWebSocketAuthenticated;
+        public ConnectionState CurrentConnectionState => currentConnectionState;
+
         #region Unity Lifecycle
 
         public string GetAppID()
@@ -131,11 +163,13 @@ namespace DecisionBox.Core
             try
             {
                 SDKLog("Initializing SDK...");
+                UpdateConnectionState(ConnectionState.Initializing, "Starting SDK initialization");
 
                 // Validate configuration
                 if (string.IsNullOrEmpty(appId) || string.IsNullOrEmpty(appSecret))
                 {
                     SDKLogError("SDK not configured. Please set App ID and App Secret in the Inspector or call Configure() method.");
+                    UpdateConnectionState(ConnectionState.Failed, "Missing configuration");
                     return false;
                 }
 
@@ -143,6 +177,7 @@ namespace DecisionBox.Core
                 if (!await AuthenticateAsync())
                 {
                     SDKLogError("Authentication failed");
+                    UpdateConnectionState(ConnectionState.Failed, "Authentication failed");
                     return false;
                 }
 
@@ -151,6 +186,7 @@ namespace DecisionBox.Core
                 if (remoteConfig == null || !remoteConfig.sdkEnabled)
                 {
                     SDKLog("SDK disabled by remote config");
+                    UpdateConnectionState(ConnectionState.Failed, "SDK disabled by remote config");
                     return false;
                 }
 
@@ -169,6 +205,7 @@ namespace DecisionBox.Core
             catch (Exception ex)
             {
                 SDKLogError($"SDK initialization failed: {ex.Message}");
+                UpdateConnectionState(ConnectionState.Failed, ex.Message);
                 return false;
             }
         }
@@ -921,12 +958,16 @@ namespace DecisionBox.Core
             {
                 if (websocketUrl == null) return;
 
+                UpdateConnectionState(ConnectionState.Connecting, "Establishing WebSocket connection");
+                
                 string wsUrl = $"{websocketUrl}?session_id={CurrentSessionId}";
                 websocket = new WebSocket(wsUrl);
 
                 websocket.OnOpen += () =>
                 {
                     SDKLog("WebSocket connected, sending authentication");
+                    UpdateConnectionState(ConnectionState.Connected, "WebSocket connected");
+                    UpdateConnectionState(ConnectionState.Authenticating, "Authenticating WebSocket");
                     websocketAuthenticated = false;
                     // Send auth message
                     var authMessage = new
@@ -947,11 +988,16 @@ namespace DecisionBox.Core
                 websocket.OnError += (string error) =>
                 {
                     SDKLogError($"WebSocket error: {error}");
+                    UpdateConnectionState(ConnectionState.Failed, $"WebSocket error: {error}");
                 };
 
                 websocket.OnClose += (WebSocketCloseCode closeCode) =>
                 {
                     SDKLog($"WebSocket closed: {closeCode}");
+                    if (currentConnectionState != ConnectionState.Disconnected)
+                    {
+                        UpdateConnectionState(ConnectionState.Disconnected, $"WebSocket closed: {closeCode}");
+                    }
                 };
 
                 await websocket.Connect();
@@ -959,6 +1005,7 @@ namespace DecisionBox.Core
             catch (Exception ex)
             {
                 SDKLogError($"WebSocket connection error: {ex.Message}");
+                UpdateConnectionState(ConnectionState.Failed, $"WebSocket connection error: {ex.Message}");
             }
         }
 
@@ -974,6 +1021,7 @@ namespace DecisionBox.Core
                     {
                         websocketAuthenticated = true;
                         SDKLog("WebSocket authentication confirmed by server");
+                        UpdateConnectionState(ConnectionState.Authenticated, "WebSocket authenticated successfully");
                         return;
                     }
                     
@@ -1000,6 +1048,7 @@ namespace DecisionBox.Core
                 _ = websocket.Close();
                 websocket = null;
                 websocketAuthenticated = false;
+                UpdateConnectionState(ConnectionState.Disconnected, "WebSocket closed");
             }
         }
 
@@ -1085,6 +1134,36 @@ namespace DecisionBox.Core
             {
                 SDKLogError($"Token refresh error: {ex.Message}");
                 return false;
+            }
+        }
+
+        #endregion
+
+        #region Connection State Management
+
+        private void UpdateConnectionState(ConnectionState newState, string? message = null)
+        {
+            if (currentConnectionState == newState) return;
+            
+            var previousState = currentConnectionState;
+            currentConnectionState = newState;
+            
+            SDKLog($"Connection state changed: {previousState} -> {newState}" + (message != null ? $" ({message})" : ""));
+            
+            // Trigger state change event
+            ConnectionStateChanged?.Invoke(previousState, newState, message);
+            
+            // Trigger ready event when fully authenticated
+            if (newState == ConnectionState.Authenticated && previousState != ConnectionState.Authenticated)
+            {
+                SDKLog("SDK is fully ready - WebSocket connected and authenticated");
+                SDKReady?.Invoke(CurrentSessionId, currentUserId);
+            }
+            
+            // Trigger error event on failure
+            if (newState == ConnectionState.Failed)
+            {
+                ConnectionError?.Invoke(message ?? "Connection failed", previousState);
             }
         }
 

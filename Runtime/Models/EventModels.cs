@@ -499,7 +499,7 @@ namespace DecisionBox.Models
         {
             var metadata = new Dictionary<string, object>
             {
-                ["rulesetId"] = RulesetId,
+                ["rule_set_id"] = RulesetId,
                 ["offerMethod"] = OfferMethod.ToString(),
                 ["isPositive"] = IsPositive,
                 ["outcome"] = Outcome
